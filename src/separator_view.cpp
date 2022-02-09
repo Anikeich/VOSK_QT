@@ -6,22 +6,17 @@
 
 separator_view::separator_view(QWidget *parent) : QWidget(parent), flagStop(false)
 {
+    setObjectName("MainWindow");
     QCoreApplication::setOrganizationName("CIRI");
     QCoreApplication::setApplicationName("VOSK");
 
     setWindowTitle("VOSK");
-    resize(400,100);
+    resize(800,600);
 
     createMainWindow();
     setStyle();
     connectButtonsWhithFunctions();
     setParamsOnForm(readOldParams());
-
-
-
-
-
-
 }
 
 void separator_view::setArg(int count, char *arg[])
@@ -30,8 +25,6 @@ void separator_view::setArg(int count, char *arg[])
         return;
 
     m_InputCatalPath->setText(QString(arg[1]));
-
-
 
 }
 
@@ -43,8 +36,10 @@ separator_view::~separator_view()
 
 void separator_view::closeEvent(QCloseEvent *event)
 {
-    flagStop = true;
+    //Q_UNUSED(event)
+    qDebug()<<"Stop";
     emit stopAll();
+    flagStop = true;
 }
 
 void separator_view::pocessErrors()
@@ -80,12 +75,12 @@ void separator_view::createMainWindow()
     vloutlabel->addWidget(m_lblInputCatal);
     vloutlabel->addWidget(m_lblOutputCatal);
     vloutlabel->addWidget(m_lblModelPath);
-    vloutlabel->addSpacing(30);
+    vloutlabel->addSpacing(40);
 
     vloutLine->addWidget(m_InputCatalPath);
     vloutLine->addWidget(m_OutputCatalPath);
     vloutLine->addWidget(m_ModelPath);
-    vloutLine->addSpacing(30);
+    vloutLine->addSpacing(40);
 
 
     vloutButton->addWidget(m_btnChuseInputCatal);
@@ -114,38 +109,26 @@ void separator_view::createMainWindow()
 
 void separator_view::setStyle()
 {
-    //    setWindowFlags(Qt::FramelessWindowHint);
-    //    setAttribute(Qt::WA_TranslucentBackground);
-    setStyleSheet(myStyle.mainWindowStyle);
 
-    setMouseTracking(true);
+    qApp->setStyleSheet(    myStyle.MainWindowStyle +
+                            myStyle.LineEditeStyle  +
+                            myStyle.PushButtonStyle +
+                            myStyle.ProgressBarStyle+
+                            myStyle.ProgressBarChunkStyle+
+                            myStyle.TextEditeStyle  +
+                            myStyle.PushButtonStyleTracked+
+                            myStyle.PushButtonStylePressed
+                        );
 
-    m_pBar                  ->setStyleSheet(myStyle.progressBarStyle);
-    m_pBarProcessFile       ->setStyleSheet(myStyle.progressBarStyle);
-
-    m_btnChuseInputCatal    ->setStyleSheet(myStyle.selectButtonStyle);
-    m_btnChuseOutputCatal   ->setStyleSheet(myStyle.selectButtonStyle);
-    m_btnChuseModelPath     ->setStyleSheet(myStyle.selectButtonStyle);
-    m_btnMainProcess        ->setStyleSheet(myStyle.mainProcButtonStyle);
-
-    m_OutputCatalPath       ->setStyleSheet(myStyle.lineEditStyle);
-    m_InputCatalPath        ->setStyleSheet(myStyle.lineEditStyle);
-    m_ModelPath             ->setStyleSheet(myStyle.lineEditStyle);
-
-    m_lblInputCatal         ->setStyleSheet(myStyle.labelStyle);
-    m_lblOutputCatal        ->setStyleSheet(myStyle.labelStyle);
-    m_lblModelPath          ->setStyleSheet(myStyle.labelStyle);
-
-    m_textEdit              ->setStyleSheet(myStyle.textEditStyle);
 
 }
 
 void separator_view::connectButtonsWhithFunctions()
 {
-    connect(m_btnMainProcess,&QPushButton::clicked,this,&separator_view::func_MainProcess);
-    connect(m_btnChuseInputCatal,&QPushButton::clicked,this,&separator_view::func_selectDirInputCatal);
-    connect(m_btnChuseOutputCatal,&QPushButton::clicked,this,&separator_view::func_selectDirOutputCatal);
-    connect(m_btnChuseModelPath,&QPushButton::clicked,this,&separator_view::func_selectDirModelCatal);
+    connect(m_btnMainProcess,       &QPushButton::clicked,  this,   &separator_view::func_MainProcess);
+    connect(m_btnChuseInputCatal,   &QPushButton::clicked,  this,   &separator_view::func_selectDirInputCatal);
+    connect(m_btnChuseOutputCatal,  &QPushButton::clicked,  this,   &separator_view::func_selectDirOutputCatal);
+    connect(m_btnChuseModelPath,    &QPushButton::clicked,  this,   &separator_view::func_selectDirModelCatal);
 }
 
 separator_view::params separator_view::readParams()
@@ -187,7 +170,7 @@ void separator_view::func_MainProcess()
 void separator_view::showError(const QString err)
 {
     QMessageBox msgBox;
-    msgBox.setStyleSheet(myStyle.mainWindowStyle);
+    msgBox.setStyleSheet(myStyle.MainWindowStyle);
     msgBox.setIcon(QMessageBox::Warning);
 
 
@@ -279,16 +262,18 @@ void separator_view::processDir(QStringList fileNames)
     for(int i=0;i<countFiles;i++)
     {
 
-        QString     fullpathFileIn      =   m_ParamsForLib.InputCatalPath+"/"+fileNames.at(i);
+        QString     InFullWavFileName      =   m_ParamsForLib.InputCatalPath+"/"+fileNames.at(i);
         QString     language            =   "Processed";
         QString     moveDir             =   outCatalPath    +"/"+language;
         QString     outTxtDir           =   outCatalPath    +"/TXT";
-        QString     fullpathFileOut     =   moveDir         +"/"+fileNames.at(i);
+        QString     MoveFullWavFileName     =   moveDir         +"/"+fileNames.at(i);
 
         createDir(moveDir);
         createDir(outTxtDir);
 
-        QString txtNameFile = QString(fileNames.at(i)).replace(".wav",".txt");
+        QString TxtNameFile = QString(fileNames.at(i)).replace(".wav",".txt");
+
+        QString OutFullTxtFileName = outTxtDir + "/"+TxtNameFile;
 
         try {
 
@@ -297,11 +282,13 @@ void separator_view::processDir(QStringList fileNames)
 
             m_pBar->setValue(i);
 
-            processFile(fullpathFileIn,fullpathFileOut);
+            processFile(InFullWavFileName,OutFullTxtFileName);
 
-            m_textEdit->append("Файл: "+ fullpathFileIn+" язык:"+ language);
+            moveFile(InFullWavFileName,MoveFullWavFileName);
 
-            m_textEdit->append("Перемещен: "+ fullpathFileOut);
+            m_textEdit->append("Файл: "+ InFullWavFileName+" язык:"+ language);
+
+            m_textEdit->append("Перемещен: "+ MoveFullWavFileName);
         }
         catch (const QString & err)
         {
@@ -311,14 +298,13 @@ void separator_view::processDir(QStringList fileNames)
 
             throw;
         }
-
     }
-
     m_textEdit->append("Обработка завершена! Количество файлов: "+QString::number(countFiles));    
 }
 
 void separator_view::processFile(const QString &filePathIn, const QString &filePathOut)
 {
+
     VoskProcessor voskProc(m_ParamsForLib.ModelPath);
 
     voskProc.setSampleRate(8000.0);
@@ -329,11 +315,11 @@ void separator_view::processFile(const QString &filePathIn, const QString &fileP
 
     connect(&voskProc,&VoskProcessor::prosessValue,m_pBarProcessFile,&QProgressBar::setValue);
 
-    connect(this,&separator_view::stopAll,&voskProc,&VoskProcessor::stop);
+    connect(this,&separator_view::stopAll,&voskProc,&VoskProcessor::stop,Qt:: DirectConnection);
 
     m_pBarProcessFile->setTextVisible(true);
 
-    m_pBarProcessFile->setFormat(filePathOut);
+    m_pBarProcessFile->setFormat(filePathIn);
 
     m_pBarProcessFile->setAlignment(Qt::AlignCenter);
 
@@ -360,16 +346,7 @@ void separator_view::moveFile(QString pathFile, QString pathMove)
     file.rename(pathFile,pathMove);
 }
 
-void separator_view::writeTextToFile(const QString & txt, const QString fileName)
-{
-    QFile file(fileName);
 
-    if(!file.open(QIODevice::WriteOnly))
-        throw QString("File "+fileName+"is not writable!");
-
-    file.write(txt.toStdString().data(),txt.size());
-
-}
 
 QByteArray separator_view::readFile(const QString & pathFile)
 {
@@ -382,34 +359,3 @@ QByteArray separator_view::readFile(const QString & pathFile)
 
     return out;
 }
-
-QString separator_view::getTextFromVosk(const QString & filePath)
-{
-    if(!filePath.contains(".wav"))
-        throw QString("Файл "+filePath+" не является wav файлом!");
-
-    FILE *wavin;
-    char buf[3200];
-    int nread, final;
-    wavin = fopen(filePath.toStdString().data(), "rb");
-    fseek(wavin, 44, SEEK_SET);
-    while (!feof(wavin)) {
-        nread = fread(buf, 1, sizeof(buf), wavin);
-        final = vosk_recognizer_accept_waveform(m_recognizer, buf, nread);
-
-        if (final) {
-            printf("%s\n", vosk_recognizer_result(m_recognizer));
-        } else {
-            printf("%s\n", vosk_recognizer_partial_result(m_recognizer));
-        }
-        // printf("%s\n", vosk_recognizer_partial_result(m_recognizer));
-
-    }
-    QString out (vosk_recognizer_final_result(m_recognizer));
-    vosk_recognizer_reset(m_recognizer);
-
-    fclose(wavin);
-    return out;
-}
-
-
