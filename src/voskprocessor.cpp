@@ -16,25 +16,6 @@ void VoskProcessor::wav_to_txt(const QString & filePathIn,const QString & filePa
 
 }
 
-//void VoskProcessor::wav_to_txt(const QStringList & filePaths)
-//{
-//    int countFiles = filePaths.size();
-
-//    try {
-//        if(countFiles==0)
-//            throw QString("No Files in dir");
-
-//        for(const auto & filePath:filePaths)
-//            wav_to_txt(filePath);
-
-
-//    } catch (const QString & err) {
-//        emit error(err);
-//    }
-
-
-//}
-
 void VoskProcessor::setModelPath(const QString &modelPath)
 {
     m_modelPath = modelPath;
@@ -97,7 +78,7 @@ void VoskProcessor::decode(const QString &filePathIn, const QString &filePathOut
 
     FILE *wavin;
     char buf[3200];
-    int nread, final, position=0;
+    int nread,position=0;
     wavin = fopen(m_filePathIn.toStdString().data(), "rb");
     fseek(wavin, 44, SEEK_SET);
     emit prosessValue(0);
@@ -105,7 +86,7 @@ void VoskProcessor::decode(const QString &filePathIn, const QString &filePathOut
     while (!feof(wavin)&&(!stopFlag))
     {
         nread = fread(buf, 1, sizeof(buf), wavin);
-        final = vosk_recognizer_accept_waveform(m_recognizer, buf, nread);
+        vosk_recognizer_accept_waveform(m_recognizer, buf, nread);
         position +=nread;
         emit prosessValue(position);
         QCoreApplication::processEvents(QEventLoop::AllEvents);
@@ -123,7 +104,7 @@ void VoskProcessor::writeResultToFile(const QString &fileName)
     ofstream outStr;
     outStr.open(fileName.toStdString().data());
     if(!outStr.is_open())
-        throw QString("Невозможно открыть файл для записи!");
+        throw QString("Невозможно открыть файл: "+fileName+" для записи!");
 
      outStr<<p;
 
@@ -138,11 +119,11 @@ float VoskProcessor::getSampleRate() const
 
 void VoskProcessor::stop()
 {
+    qDebug()<<"Stop VoskProcessor";
+
    stopFlag=true;
-
-   writeResultToFile(m_filePathOut);
-
    vosk_recognizer_reset(m_recognizer);
+   // deleteLater();
 }
 
 QString VoskProcessor::getModelPath() const

@@ -34,21 +34,8 @@ public:
     explicit separator_view(QWidget *parent = nullptr);
 
     void setArg(int count,char * arg[]);
-    void testprogressbar()
-    {
-        m_pBar->show();
-        m_pBar->setMaximum(100);
-        m_pBar->setValue(0);
-        for(int i=0;i<100;i++)
-        {
-            m_pBar->setValue(i);
-            QCoreApplication::processEvents(QEventLoop::AllEvents);
-            QThread::sleep(2);
-        }
-        m_pBar->setValue(m_pBar->maximum());
-        m_pBar->close();
-    }
-     ~separator_view() override;
+
+     ~separator_view()                  override;
 
     void closeEvent(QCloseEvent *event) override;
 
@@ -71,7 +58,7 @@ private:
 
     struct Dialogs
     {
-        QString chuseInputDir           = "Выбирите входной каталог";
+        QString chuseInputDir           = "bВыбирите входной каталог";
         QString chuseOutDir             = "Выбирите выходной каталог";
         QString chuseModel              = "Выбирите каталог модели распознавания";
 
@@ -89,22 +76,23 @@ private:
 
     const struct labels
     {
-        QString lblInputCatal           = "Путь ко входному каталогу";
-        QString lblOutputCatal          = "Путь к выходному каталогу";
-        QString lblModelPath            = "Путь к модели распозначания";
+        QString lblInputCatal           = "<b>Путь ко входному каталогу</b>";
+        QString lblOutputCatal          = "<b>Путь к выходному каталогу</b>";
+        QString lblModelPath            = "<b>Путь к модели распознавания</b>";
 
     }labelsName;
 
 
     const struct ElementsStyle
     {
-        QString mainWindowStyle         = "background-color:moccasin;";
-        QString progressBarStyle        = "border:2px solid gray; border-radius: 5px; background-color:lightblue; width: 20px; text-align: center";
-        QString selectButtonStyle        ="border:2px solid gray; border-radius: 5px; color:blue";
-        QString mainProcButtonStyle     = "border:2px solid gray; border-radius: 5px; color:green";
-        QString lineEditStyle           = "border:2px solid gray; border-radius: 5px; color:green";
-        QString textEditStyle           = "border:2px solid gray; border-radius: 5px; color:green";
-        QString labelStyle              = "border:2px solid gray; border-radius: 5px; color:green";
+        QString MainWindowStyle         = "QWidget#MainWindow   {   background: #fffcdb }";
+        QString ProgressBarStyle        = "QProgressBar         { border: 2px solid gray    ;    border-radius: 5px  ; background: #55ff7f           ;   width: 20px;    text-align: center}";
+        QString ProgressBarChunkStyle   = "QProgressBar::chunk  { background: green}";
+        QString PushButtonStyle         = "QPushButton          { border: 2px solid #00aa00 ;   border-radius: 5px  ; background: #f0e7b7           ;   min-height: 30 }";
+        QString PushButtonStylePressed  = "QPushButton:pressed  { border: 2px solid #00aa00 ;   border-radius: 5px  ; background: green             ;   min-height: 30 }";
+        QString PushButtonStyleTracked  = "QPushButton:hover    { border: 2px solid #d2d27b ;   border-radius: 5px  ; background: #f0e7b7           ;   min-height: 30 }";
+        QString LineEditeStyle          = "QLineEdit    { border: 2px solid #00aa00 ;   border-radius: 5px  ; background: #fffcdb           ;   min-height: 30}";
+        QString TextEditeStyle          = "QTextEdit    { border: 5px solid #d2d27b ;   border-radius: 5px  ; background-color: #fffcdb     ;   min-height: 30}";
 
 
     }myStyle;
@@ -126,9 +114,7 @@ private:
 
     void            createDir(QString pathDir);
     void            moveFile(QString pathFile,QString pathMove);
-    void            writeTextToFile(const QString & txt, const QString fileName);
     QByteArray      readFile(const QString &file);
-    QString         getTextFromVosk(const QString &filePath);
 
     void            func_MainProcess();
     void            func_selectDirInputCatal();
@@ -153,10 +139,12 @@ private:
     QProgressBar    *   m_pBarProcessFile       = nullptr;
 
 
-    VoskModel       *   m_model                   = nullptr;
-    VoskRecognizer  *   m_recognizer              = nullptr;
+    VoskModel       *   m_model                 = nullptr;
+    VoskRecognizer  *   m_recognizer            = nullptr;
 
     bool flagStop;
+
+    QThread         *   m_processFileThread       = nullptr;
 
 
 };
