@@ -38,15 +38,22 @@ signals:
     void prosessValue   (int val);
     void processMaxValue(int val);
 
+public slots:
+    void stop();
+
 
 
 private:
 
     void decode(const QString &filePathIn, const QString &filePathOut);
+    void writeResultToFile(const QString & fileName);
     VoskModel       *   m_model                   = nullptr;
     VoskRecognizer  *   m_recognizer              = nullptr;
     QString m_modelPath;
     float m_SampleRate;
+    bool stopFlag;
+    QString m_filePathIn;
+    QString m_filePathOut;
 
 
 };

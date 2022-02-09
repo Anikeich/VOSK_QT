@@ -48,9 +48,12 @@ public:
         m_pBar->setValue(m_pBar->maximum());
         m_pBar->close();
     }
-    virtual ~separator_view();
+     ~separator_view() override;
+
+    void closeEvent(QCloseEvent *event) override;
 
 signals:
+    void stopAll();
 
 public slots:
     void pocessErrors();
@@ -117,7 +120,9 @@ private:
     params          readParams();                   //читает параметры с формы
     params          readOldParams();                //читает параметры из файла настроек
     void            setParamsOnForm(params onForm); //устанавливает параметры на форму
-    void            processFiles(QStringList fileNames);
+    void            processDir(QStringList fileNames);
+    void            processFile(const QString & filePathIn, const QString & filePathOut);
+
 
     void            createDir(QString pathDir);
     void            moveFile(QString pathFile,QString pathMove);
@@ -150,6 +155,8 @@ private:
 
     VoskModel       *   m_model                   = nullptr;
     VoskRecognizer  *   m_recognizer              = nullptr;
+
+    bool flagStop;
 
 
 };
