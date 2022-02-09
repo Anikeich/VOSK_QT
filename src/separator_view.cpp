@@ -4,7 +4,7 @@
 
 
 
-separator_view::separator_view(QWidget *parent) : QWidget(parent)
+separator_view::separator_view(QWidget *parent) : QWidget(parent), flagStop(false)
 {
     QCoreApplication::setOrganizationName("CIRI");
     QCoreApplication::setApplicationName("VOSK");
@@ -16,6 +16,8 @@ separator_view::separator_view(QWidget *parent) : QWidget(parent)
     setStyle();
     connectButtonsWhithFunctions();
     setParamsOnForm(readOldParams());
+
+
 
 
 
@@ -36,21 +38,13 @@ void separator_view::setArg(int count, char *arg[])
 
 separator_view::~separator_view()
 {
-    //    delete m_btnChuseInputCatal;
-    //    delete m_btnChuseOutputCatal;
-    //    delete m_btnChuseModelPath;
-    //    delete m_btnMainProcess;
 
-    //    delete m_lblInputCatal;
-    //    delete m_lblOutputCatal;
-    //    delete m_lblModelPath;
+}
 
-    //    delete m_InputCatalPath;
-    //    delete m_OutputCatalPath;
-    //    delete m_ModelPath;
-
-    //    delete m_textEdit;
-    //    delete m_pBar;
+void separator_view::closeEvent(QCloseEvent *event)
+{
+    flagStop = true;
+    emit stopAll();
 }
 
 void separator_view::pocessErrors()
@@ -69,19 +63,19 @@ void separator_view::createMainWindow()
     m_lblOutputCatal        =   new QLabel(labelsName.lblOutputCatal);
     m_lblModelPath          =   new QLabel(labelsName.lblModelPath);
 
-    m_InputCatalPath        =   new QLineEdit();
-    m_OutputCatalPath       =   new QLineEdit();
-    m_ModelPath             =   new QLineEdit();
+    m_InputCatalPath        =   new QLineEdit;
+    m_OutputCatalPath       =   new QLineEdit;
+    m_ModelPath             =   new QLineEdit;
 
-    m_textEdit              =   new QTextEdit();
+    m_textEdit              =   new QTextEdit;
 
-    m_pBar                  =   new QProgressBar();
-    m_pBarProcessFile       =   new QProgressBar();
+    m_pBar                  =   new QProgressBar;
+    m_pBarProcessFile       =   new QProgressBar;
 
-    QVBoxLayout* vloutlabel =   new QVBoxLayout();
-    QVBoxLayout* vloutLine  =   new QVBoxLayout();
-    QVBoxLayout* vloutButton=   new QVBoxLayout();
-    QHBoxLayout* hlout      =   new QHBoxLayout();
+    QVBoxLayout* vloutlabel =   new QVBoxLayout;
+    QVBoxLayout* vloutLine  =   new QVBoxLayout;
+    QVBoxLayout* vloutButton=   new QVBoxLayout;
+    QHBoxLayout* hlout      =   new QHBoxLayout;
 
     vloutlabel->addWidget(m_lblInputCatal);
     vloutlabel->addWidget(m_lblOutputCatal);
@@ -104,7 +98,7 @@ void separator_view::createMainWindow()
     hlout->addLayout(vloutLine);
     hlout->addLayout(vloutButton);
 
-    QVBoxLayout* Mainhlout = new QVBoxLayout();
+    QVBoxLayout* Mainhlout = new QVBoxLayout;
     Mainhlout->addLayout(hlout);
     Mainhlout->addWidget(m_textEdit);
     Mainhlout->addWidget(m_pBar);
@@ -178,7 +172,7 @@ void separator_view::func_MainProcess()
 
         QStringList fileNames = readFileNameInCatalog(m_ParamsForLib.InputCatalPath);
 
-        processFiles(fileNames);
+        processDir(fileNames);
 
     } catch (const QString & out) {
         showError(out);
@@ -266,7 +260,7 @@ void separator_view::setParamsOnForm(separator_view::params onForm)
     m_ModelPath->setText(onForm.ModelPath);
 }
 
-void separator_view::processFiles(QStringList fileNames)
+void separator_view::processDir(QStringList fileNames)
 {
     int countFiles = fileNames.size();
     if(countFiles==0)
@@ -285,10 +279,12 @@ void separator_view::processFiles(QStringList fileNames)
     for(int i=0;i<countFiles;i++)
     {
 
-        QString     fullpathFileIn    = m_ParamsForLib.InputCatalPath+"/"+fileNames.at(i);
-        QString     language        = "Processed";
-        QString moveDir =  outCatalPath+"/"+language;
-        QString outTxtDir = outCatalPath+"/TXT";
+        QString     fullpathFileIn      =   m_ParamsForLib.InputCatalPath+"/"+fileNames.at(i);
+        QString     language            =   "Processed";
+        QString     moveDir             =   outCatalPath    +"/"+language;
+        QString     outTxtDir           =   outCatalPath    +"/TXT";
+        QString     fullpathFileOut     =   moveDir         +"/"+fileNames.at(i);
+
         createDir(moveDir);
         createDir(outTxtDir);
 
@@ -296,42 +292,58 @@ void separator_view::processFiles(QStringList fileNames)
 
         try {
 
+            if(flagStop==true)
+               return;
+
             m_pBar->setValue(i);
 
-
-            //----------------------------------------------------------
-            //            QString     outData         = getTextFromVosk(fullpathFile);
-            VoskProcessor voskProc(m_ParamsForLib.ModelPath);
-            voskProc.setSampleRate(8000.0);
-            voskProc.init();
-            connect(&voskProc,&VoskProcessor::processMaxValue,m_pBarProcessFile,&QProgressBar::setMaximum);
-            connect(&voskProc,&VoskProcessor::prosessValue,m_pBarProcessFile,&QProgressBar::setValue);
-            m_pBarProcessFile->show();
-            voskProc.wav_to_txt(fullpathFileIn,outTxtDir+"/"+(txtNameFile));
-            m_pBarProcessFile->close();
-
-            voskProc.free();
-            //----------------------------------------------------------
-
-
-            moveFile(fullpathFileIn,moveDir+"/"+fileNames.at(i));
+            processFile(fullpathFileIn,fullpathFileOut);
 
             m_textEdit->append("Файл: "+ fullpathFileIn+" язык:"+ language);
-            m_textEdit->append("Перемещен: "+ moveDir+"/"+fileNames.at(i));
 
-
+            m_textEdit->append("Перемещен: "+ fullpathFileOut);
         }
         catch (const QString & err)
         {
             m_pBar->close();
+
             m_pBarProcessFile->close();
+
             throw;
         }
 
     }
 
-    m_textEdit->append("Обработка завершена! Количество файлов: "+QString::number(countFiles));
+    m_textEdit->append("Обработка завершена! Количество файлов: "+QString::number(countFiles));    
+}
 
+void separator_view::processFile(const QString &filePathIn, const QString &filePathOut)
+{
+    VoskProcessor voskProc(m_ParamsForLib.ModelPath);
+
+    voskProc.setSampleRate(8000.0);
+
+    voskProc.init();
+
+    connect(&voskProc,&VoskProcessor::processMaxValue,m_pBarProcessFile,&QProgressBar::setMaximum);
+
+    connect(&voskProc,&VoskProcessor::prosessValue,m_pBarProcessFile,&QProgressBar::setValue);
+
+    connect(this,&separator_view::stopAll,&voskProc,&VoskProcessor::stop);
+
+    m_pBarProcessFile->setTextVisible(true);
+
+    m_pBarProcessFile->setFormat(filePathOut);
+
+    m_pBarProcessFile->setAlignment(Qt::AlignCenter);
+
+    m_pBarProcessFile->show();
+
+    voskProc.wav_to_txt(filePathIn,filePathOut);
+
+    m_pBarProcessFile->close();
+
+    voskProc.free();
 
 }
 

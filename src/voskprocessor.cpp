@@ -1,8 +1,9 @@
 #include "voskprocessor.h"
 
-VoskProcessor::VoskProcessor( const QString &modelPath,QObject *parent): QObject(parent),m_modelPath(modelPath)
+VoskProcessor::VoskProcessor( const QString &modelPath,QObject *parent): QObject(parent),m_modelPath(modelPath),stopFlag(false)
 {
     setSampleRate(16000.0);
+
 
 }
 
@@ -87,44 +88,40 @@ void VoskProcessor::decode(const QString &filePathIn, const QString &filePathOut
     if(!filePathIn.contains(".wav"))
         throw QString("Файл "+filePathIn+" не является wav файлом!");
 
-    int fileSize = getFileSize(filePathIn.toStdString().data());
+    m_filePathIn=filePathIn;
+    m_filePathOut=filePathOut;
+
+
+    int fileSize = getFileSize(m_filePathIn.toStdString().data());
     emit processMaxValue(fileSize);
 
     FILE *wavin;
     char buf[3200];
     int nread, final, position=0;
-    wavin = fopen(filePathIn.toStdString().data(), "rb");
+    wavin = fopen(m_filePathIn.toStdString().data(), "rb");
     fseek(wavin, 44, SEEK_SET);
     emit prosessValue(0);
 
-    while (!feof(wavin)) {
+    while (!feof(wavin)&&(!stopFlag))
+    {
         nread = fread(buf, 1, sizeof(buf), wavin);
         final = vosk_recognizer_accept_waveform(m_recognizer, buf, nread);
         position +=nread;
         emit prosessValue(position);
         QCoreApplication::processEvents(QEventLoop::AllEvents);
-
-
-//                if (final) {
-//                  //  printf("%s\n", vosk_recognizer_result(m_recognizer));
-//                   //result+= QString(vosk_recognizer_result(m_recognizer));
-//                } else {
-////                    printf("%s\n", vosk_recognizer_partial_result(m_recognizer));
-//                   // vosk_recognizer_partial_result(m_recognizer);
-//                }
-
     }
 
+    writeResultToFile(m_filePathOut);
+    fclose(wavin);
+}
 
-   // std::cout<<strlen(vosk_recognizer_final_result(m_recognizer));
-
-   // std::cout<<vosk_recognizer_final_result(m_recognizer);
+void VoskProcessor::writeResultToFile(const QString &fileName)
+{
+    using namespace std;
 
     const char * p = vosk_recognizer_final_result(m_recognizer);
-    fclose(wavin);
-
     ofstream outStr;
-    outStr.open(filePathOut.toStdString().data());
+    outStr.open(fileName.toStdString().data());
     if(!outStr.is_open())
         throw QString("Невозможно открыть файл для записи!");
 
@@ -132,12 +129,20 @@ void VoskProcessor::decode(const QString &filePathIn, const QString &filePathOut
 
      outStr.close();
 
-
 }
 
 float VoskProcessor::getSampleRate() const
 {
     return m_SampleRate;
+}
+
+void VoskProcessor::stop()
+{
+   stopFlag=true;
+
+   writeResultToFile(m_filePathOut);
+
+   vosk_recognizer_reset(m_recognizer);
 }
 
 QString VoskProcessor::getModelPath() const
