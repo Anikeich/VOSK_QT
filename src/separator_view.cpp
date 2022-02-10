@@ -4,7 +4,7 @@
 
 
 
-separator_view::separator_view(QWidget *parent) : QWidget(parent), flagStop(false)
+separator_view::separator_view(QWidget *parent) : QWidget(parent)
 {
     setObjectName("MainWindow");
     QCoreApplication::setOrganizationName("CIRI");
@@ -36,10 +36,9 @@ separator_view::~separator_view()
 
 void separator_view::closeEvent(QCloseEvent *event)
 {
-    //Q_UNUSED(event)
+    Q_UNUSED(event)
     qDebug()<<"Stop";
     emit stopAll();
-    flagStop = true;
 }
 
 void separator_view::pocessErrors()
@@ -100,10 +99,12 @@ void separator_view::createMainWindow()
     Mainhlout->addWidget(m_pBarProcessFile);
 
 
-
     setLayout(Mainhlout);
+
     m_pBar->close();
+
     m_pBarProcessFile->close();
+
 
 }
 
@@ -147,15 +148,39 @@ separator_view::params separator_view::readParams()
 
 void separator_view::func_MainProcess()
 {
+
+
     try {
 
         m_ParamsForLib = readParams();
 
         saveParams(m_ParamsForLib);
 
-        QStringList fileNames = readFileNameInCatalog(m_ParamsForLib.InputCatalPath);
+        DirProcessor processor(m_ParamsForLib.ModelPath);
 
-        processDir(fileNames);
+        processor.setSampleRate(8000.0);
+
+        processor.init();
+
+        connect(&processor,&DirProcessor::fileSizeSig,          m_pBarProcessFile,      &QProgressBar::setMaximum);
+
+        connect(&processor,&DirProcessor::bitOfFileSig,         m_pBarProcessFile,      &QProgressBar::setValue);
+
+        connect(&processor,&DirProcessor::numberOfFiles,        m_pBar,                 &QProgressBar::setMaximum);
+
+        connect(&processor,&DirProcessor::numberOfCurrentFile,  m_pBar,                 &QProgressBar::setValue);
+
+        connect(&processor,&DirProcessor::nameOfCurrentFile,    m_pBarProcessFile,      &QProgressBar::setFormat);
+
+        connect(this,&separator_view::stopAll,                  &processor,             &DirProcessor::stop,Qt:: DirectConnection);
+
+        m_pBar->show();
+
+        m_pBarProcessFile->show();
+
+        processor.wav_to_txt_dir(m_ParamsForLib.InputCatalPath,m_ParamsForLib.OutputCatalPath);
+
+        processor.free();
 
     } catch (const QString & out) {
         showError(out);
@@ -164,6 +189,7 @@ void separator_view::func_MainProcess()
     m_pBar->setValue(m_pBar->maximum());
     m_pBar->close();
     m_pBarProcessFile->close();
+
 
 }
 
@@ -210,14 +236,6 @@ QString separator_view::selectDir(QString nameDir)
     return dir;
 }
 
-QStringList separator_view::readFileNameInCatalog(QString catalDir)
-{
-    QStringList namesFiles;
-    QDir messageDir(catalDir);
-    namesFiles=(messageDir.entryList(QStringList("*.*"),QDir::Files,QDir::NoSort));//создание листа с названиями файлов
-    return namesFiles;
-}
-
 void separator_view::saveParams(separator_view::params m_params)
 {
     QSettings settings(QCoreApplication::organizationName(),QCoreApplication::applicationName());
@@ -243,119 +261,3 @@ void separator_view::setParamsOnForm(separator_view::params onForm)
     m_ModelPath->setText(onForm.ModelPath);
 }
 
-void separator_view::processDir(QStringList fileNames)
-{
-    int countFiles = fileNames.size();
-    if(countFiles==0)
-        throw QString("No Files in dir:"+m_ParamsForLib.InputCatalPath);
-
-    m_pBar->setMaximum(countFiles);
-    m_pBar->setValue(0);
-    m_pBar->show();
-    m_textEdit->clear();
-    QCoreApplication::processEvents(QEventLoop::AllEvents);
-    QString outCatalPath    = m_ParamsForLib.OutputCatalPath;
-
-    if(outCatalPath=="")
-        outCatalPath = m_ParamsForLib.InputCatalPath;
-
-    for(int i=0;i<countFiles;i++)
-    {
-
-        QString     InFullWavFileName      =   m_ParamsForLib.InputCatalPath+"/"+fileNames.at(i);
-        QString     language            =   "Processed";
-        QString     moveDir             =   outCatalPath    +"/"+language;
-        QString     outTxtDir           =   outCatalPath    +"/TXT";
-        QString     MoveFullWavFileName     =   moveDir         +"/"+fileNames.at(i);
-
-        createDir(moveDir);
-        createDir(outTxtDir);
-
-        QString TxtNameFile = QString(fileNames.at(i)).replace(".wav",".txt");
-
-        QString OutFullTxtFileName = outTxtDir + "/"+TxtNameFile;
-
-        try {
-
-            if(flagStop==true)
-               return;
-
-            m_pBar->setValue(i);
-
-            processFile(InFullWavFileName,OutFullTxtFileName);
-
-            moveFile(InFullWavFileName,MoveFullWavFileName);
-
-            m_textEdit->append("Файл: "+ InFullWavFileName+" язык:"+ language);
-
-            m_textEdit->append("Перемещен: "+ MoveFullWavFileName);
-        }
-        catch (const QString & err)
-        {
-            m_pBar->close();
-
-            m_pBarProcessFile->close();
-
-            throw;
-        }
-    }
-    m_textEdit->append("Обработка завершена! Количество файлов: "+QString::number(countFiles));    
-}
-
-void separator_view::processFile(const QString &filePathIn, const QString &filePathOut)
-{
-
-    VoskProcessor voskProc(m_ParamsForLib.ModelPath);
-
-    voskProc.setSampleRate(8000.0);
-
-    voskProc.init();
-
-    connect(&voskProc,&VoskProcessor::processMaxValue,m_pBarProcessFile,&QProgressBar::setMaximum);
-
-    connect(&voskProc,&VoskProcessor::prosessValue,m_pBarProcessFile,&QProgressBar::setValue);
-
-    connect(this,&separator_view::stopAll,&voskProc,&VoskProcessor::stop,Qt:: DirectConnection);
-
-    m_pBarProcessFile->setTextVisible(true);
-
-    m_pBarProcessFile->setFormat(filePathIn);
-
-    m_pBarProcessFile->setAlignment(Qt::AlignCenter);
-
-    m_pBarProcessFile->show();
-
-    voskProc.wav_to_txt(filePathIn,filePathOut);
-
-    m_pBarProcessFile->close();
-
-    voskProc.free();
-
-}
-
-void separator_view::createDir(QString pathDir)
-{
-    QDir InDir(pathDir);
-    if(!InDir.exists())
-        InDir.mkpath(pathDir);
-}
-
-void separator_view::moveFile(QString pathFile, QString pathMove)
-{
-    QFile file(pathFile);
-    file.rename(pathFile,pathMove);
-}
-
-
-
-QByteArray separator_view::readFile(const QString & pathFile)
-{
-    QFile file (pathFile);
-    if(!file.open(QIODevice::ReadOnly))
-        throw QString("File "+pathFile+" no read!");
-
-    QByteArray out = file.readAll();
-    file.close();
-
-    return out;
-}

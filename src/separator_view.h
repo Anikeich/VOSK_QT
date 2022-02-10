@@ -9,7 +9,6 @@
 #include <qlayout.h>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
-#include <QFile>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QColor>
@@ -20,10 +19,9 @@
 #include <QApplication>
 #include <QDebug>
 #include <QThread>
-#include <fstream>
 
 #include "VoskLib/vosk_api.h"
-#include "voskprocessor.h"
+#include "DirProcessor.h"
 
 
 
@@ -102,19 +100,11 @@ private:
     void            showError(const QString err);
     void            connectButtonsWhithFunctions();
     QString         selectDir(QString nameDir);
-    QStringList     readFileNameInCatalog(QString catalDir);
 
     void            saveParams(params m_params);    //сохраняет параметры в файл настроек
     params          readParams();                   //читает параметры с формы
     params          readOldParams();                //читает параметры из файла настроек
     void            setParamsOnForm(params onForm); //устанавливает параметры на форму
-    void            processDir(QStringList fileNames);
-    void            processFile(const QString & filePathIn, const QString & filePathOut);
-
-
-    void            createDir(QString pathDir);
-    void            moveFile(QString pathFile,QString pathMove);
-    QByteArray      readFile(const QString &file);
 
     void            func_MainProcess();
     void            func_selectDirInputCatal();
@@ -140,9 +130,7 @@ private:
 
 
     VoskModel       *   m_model                 = nullptr;
-    VoskRecognizer  *   m_recognizer            = nullptr;
-
-    bool flagStop;
+    VoskRecognizer  *   m_recognizer            = nullptr;  
 
     QThread         *   m_processFileThread       = nullptr;
 

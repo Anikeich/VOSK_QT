@@ -74,25 +74,27 @@ void VoskProcessor::decode(const QString &filePathIn, const QString &filePathOut
 
 
     int fileSize = getFileSize(m_filePathIn.toStdString().data());
-    emit processMaxValue(fileSize);
+    emit fileSizeSig(fileSize);
 
     FILE *wavin;
     char buf[3200];
     int nread,position=0;
     wavin = fopen(m_filePathIn.toStdString().data(), "rb");
     fseek(wavin, 44, SEEK_SET);
-    emit prosessValue(0);
+    emit bitOfFileSig(0);
 
     while (!feof(wavin)&&(!stopFlag))
     {
         nread = fread(buf, 1, sizeof(buf), wavin);
         vosk_recognizer_accept_waveform(m_recognizer, buf, nread);
         position +=nread;
-        emit prosessValue(position);
+        emit bitOfFileSig(position);
         QCoreApplication::processEvents(QEventLoop::AllEvents);
     }
 
+    if(!stopFlag)
     writeResultToFile(m_filePathOut);
+
     fclose(wavin);
 }
 
