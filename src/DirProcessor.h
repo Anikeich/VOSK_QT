@@ -3,21 +3,33 @@
 
 #include <QObject>
 #include "voskprocessor.h"
+#include "message.h"
 
 class DirProcessor :public VoskProcessor
 {    
  Q_OBJECT
 
-public:
-    DirProcessor(const QString & modelPath="",QObject * parent = nullptr);
-    void wav_to_txt_dir(const QString & InDirPath, const QString & OutDirPath = "out");
+    Q_PROPERTY(bool running READ getRunning WRITE setRunning NOTIFY runningChanged)
 
+public:
+    DirProcessor(QObject * parent = nullptr);
+    ~DirProcessor()
+    {
+            qDebug()<<"DirProcessor daleted!";
+    }
+    void wav_to_txt_dir();
+    void setParams(const QString & InDirPath, const QString & OutDirPath, const QString & modelPath, int samplRate);
+
+    bool getRunning() const;
+    void setRunning(bool running);
+
+    QStringList     getFileNamesInDir(const QString & DirPath);
 signals:
-    void errorSig                  (const QString & err);
     void numberOfFiles          (int numOfFiles);
     void numberOfCurrentFile    (int numOfCurFile);
     void nameOfCurrentFile      (const QString & CurFileName);
-    void MsgOfProcess           (const QString & msg);
+    void finished();
+    void runningChanged();
 
 
 public slots:
@@ -26,10 +38,12 @@ public slots:
 
 
 private:
-    QStringList     getFileNamesInDir(const QString & DirPath);
     void            createDir(QString pathDir);
-    bool            flagStop;
     void            moveFile(QString pathFile,QString pathMove);
+    QString  m_InDirPath;
+    QString  m_OutDirPath;
+
+    bool m_running;
 
 
 };

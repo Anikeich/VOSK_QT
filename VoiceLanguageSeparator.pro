@@ -28,14 +28,16 @@ SOURCES += \
         main.cpp \
     src/separator_view.cpp \
     src/voskprocessor.cpp \
-    src/DirProcessor.cpp
+    src/DirProcessor.cpp \
+    src/message.cpp
 
 
 HEADERS += \
     src/separator_view.h \
     VoskLib/vosk_api.h \
     src/voskprocessor.h \
-    src/DirProcessor.h
+    src/DirProcessor.h \
+    src/message.h
 
 
 

@@ -17,6 +17,7 @@ separator_view::separator_view(QWidget *parent) : QWidget(parent)
     setStyle();
     connectButtonsWhithFunctions();
     setParamsOnForm(readOldParams());
+
 }
 
 void separator_view::setArg(int count, char *arg[])
@@ -32,6 +33,7 @@ void separator_view::setArg(int count, char *arg[])
 separator_view::~separator_view()
 {
 
+
 }
 
 void separator_view::closeEvent(QCloseEvent *event)
@@ -41,8 +43,34 @@ void separator_view::closeEvent(QCloseEvent *event)
     emit stopAll();
 }
 
-void separator_view::pocessErrors()
+void separator_view::pocessMessage(const Message & msg)
 {
+    if(msg.msgType()==Message::POSITIVE)
+        m_textEdit->setTextColor(Qt::darkGreen);
+    else if (msg.msgType()==Message::NEGATIVE)
+        m_textEdit->setTextColor(Qt::red);
+    else if(msg.msgType()==Message::ORDINARY)
+        m_textEdit->setTextColor(Qt::blue);
+
+    m_textEdit->append("Msg: "+msg.text());
+
+}
+
+void separator_view::finish()
+{
+    m_pBar->setValue(m_pBar->maximum());
+
+    m_pBar->close();
+
+    m_pBarProcessFile->close();
+
+    m_processThread->quit();
+
+    m_processThread->wait();
+
+    delete   m_processThread;
+
+    delete   processor   ;
 
 }
 
@@ -119,7 +147,7 @@ void separator_view::setStyle()
                             myStyle.TextEditeStyle  +
                             myStyle.PushButtonStyleTracked+
                             myStyle.PushButtonStylePressed
-                        );
+                            );
 
 
 }
@@ -131,6 +159,23 @@ void separator_view::connectButtonsWhithFunctions()
     connect(m_btnChuseOutputCatal,  &QPushButton::clicked,  this,   &separator_view::func_selectDirOutputCatal);
     connect(m_btnChuseModelPath,    &QPushButton::clicked,  this,   &separator_view::func_selectDirModelCatal);
 }
+
+void separator_view::connectProcessorWithViewAndNewThread(DirProcessor * processor, QThread* processThread)
+{
+    connect(processThread,      &QThread::started,                      processor,                  &DirProcessor::wav_to_txt_dir);
+    connect(this,               &separator_view::stopAll,               processor,                  &DirProcessor::stop                  ,Qt::DirectConnection);
+    connect(processor,          &DirProcessor::finished,                this,                       &separator_view::finish);
+
+
+    connect(processor,          &DirProcessor::messageSig,              this,                       &separator_view::pocessMessage       ,Qt::DirectConnection);
+    connect(processor,          &DirProcessor::fileSizeSig,             m_pBarProcessFile,          &QProgressBar::setMaximum);
+    connect(processor,          &DirProcessor::bitOfFileSig,            m_pBarProcessFile,          &QProgressBar::setValue);
+    connect(processor,          &DirProcessor::nameOfCurrentFile,       m_pBarProcessFile,          &QProgressBar::setFormat);
+    connect(processor,          &DirProcessor::numberOfCurrentFile,     m_pBar,                     &QProgressBar::setValue);
+    connect(processor,          &DirProcessor::numberOfFiles,           m_pBar,                     &QProgressBar::setMaximum);
+}
+
+
 
 separator_view::params separator_view::readParams()
 {
@@ -148,7 +193,7 @@ separator_view::params separator_view::readParams()
 
 void separator_view::func_MainProcess()
 {
-
+        m_textEdit->clear();
 
     try {
 
@@ -156,41 +201,37 @@ void separator_view::func_MainProcess()
 
         saveParams(m_ParamsForLib);
 
-        DirProcessor processor(m_ParamsForLib.ModelPath);
+           processor            = new DirProcessor;
 
-        processor.setSampleRate(8000.0);
+           m_processThread      = new QThread;
 
-        processor.init();
+        processor->setParams(m_ParamsForLib.InputCatalPath,m_ParamsForLib.OutputCatalPath,m_ParamsForLib.ModelPath,16000.0);
 
-        connect(&processor,&DirProcessor::fileSizeSig,          m_pBarProcessFile,      &QProgressBar::setMaximum);
+        if(processor->getFileNamesInDir(m_ParamsForLib.InputCatalPath).size()==0)
+        {
+            this->pocessMessage(Message("Отсутствуют файлы для обработки!"));
 
-        connect(&processor,&DirProcessor::bitOfFileSig,         m_pBarProcessFile,      &QProgressBar::setValue);
+            delete processor;
 
-        connect(&processor,&DirProcessor::numberOfFiles,        m_pBar,                 &QProgressBar::setMaximum);
+            delete m_processThread;
 
-        connect(&processor,&DirProcessor::numberOfCurrentFile,  m_pBar,                 &QProgressBar::setValue);
+            return;
+        }
 
-        connect(&processor,&DirProcessor::nameOfCurrentFile,    m_pBarProcessFile,      &QProgressBar::setFormat);
+        connectProcessorWithViewAndNewThread(processor,m_processThread);
 
-        connect(this,&separator_view::stopAll,                  &processor,             &DirProcessor::stop,Qt:: DirectConnection);
+        processor->moveToThread(m_processThread);
+
+        m_processThread->start();
 
         m_pBar->show();
 
         m_pBarProcessFile->show();
 
-        processor.wav_to_txt_dir(m_ParamsForLib.InputCatalPath,m_ParamsForLib.OutputCatalPath);
-
-        processor.free();
 
     } catch (const QString & out) {
         showError(out);
     }
-
-    m_pBar->setValue(m_pBar->maximum());
-    m_pBar->close();
-    m_pBarProcessFile->close();
-
-
 }
 
 void separator_view::showError(const QString err)
@@ -198,8 +239,6 @@ void separator_view::showError(const QString err)
     QMessageBox msgBox;
     msgBox.setStyleSheet(myStyle.MainWindowStyle);
     msgBox.setIcon(QMessageBox::Warning);
-
-
     msgBox.setText(err);
     msgBox.exec();
 }
@@ -225,6 +264,7 @@ void separator_view::func_selectDirModelCatal()
     if(path!="")
         m_ModelPath->setText(path);
 }
+
 
 QString separator_view::selectDir(QString nameDir)
 {

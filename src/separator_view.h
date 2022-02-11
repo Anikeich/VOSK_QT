@@ -22,12 +22,14 @@
 
 #include "VoskLib/vosk_api.h"
 #include "DirProcessor.h"
+#include "message.h"
 
 
 
 class separator_view : public QWidget
 {
     Q_OBJECT
+
 public:
     explicit separator_view(QWidget *parent = nullptr);
 
@@ -37,11 +39,15 @@ public:
 
     void closeEvent(QCloseEvent *event) override;
 
+
+
 signals:
     void stopAll();
+    void runningChanged();
 
 public slots:
-    void pocessErrors();
+    void pocessMessage(const Message & msg);
+    void finish();
 
 private:
 
@@ -99,6 +105,7 @@ private:
     void            setStyle();
     void            showError(const QString err);
     void            connectButtonsWhithFunctions();
+    void            connectProcessorWithViewAndNewThread(DirProcessor *processor, QThread *processThread);
     QString         selectDir(QString nameDir);
 
     void            saveParams(params m_params);    //сохраняет параметры в файл настроек
@@ -132,7 +139,11 @@ private:
     VoskModel       *   m_model                 = nullptr;
     VoskRecognizer  *   m_recognizer            = nullptr;  
 
-    QThread         *   m_processFileThread       = nullptr;
+    DirProcessor   *   processor;
+
+    QThread        *   m_processThread;
+
+
 
 
 };

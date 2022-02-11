@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <QDebug>
 #include <fstream>
+#include "src/message.h"
 
 
 using namespace std;

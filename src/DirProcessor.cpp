@@ -1,74 +1,100 @@
 #include "DirProcessor.h"
 
-DirProcessor::DirProcessor(const QString &modelPath, QObject *parent):VoskProcessor(modelPath,parent),flagStop(false)
+
+DirProcessor::DirProcessor(QObject *parent):
+    VoskProcessor(parent)
 {
 
 }
 
-void DirProcessor::wav_to_txt_dir(const QString & InDirPath, const QString & OutDirPath)
+void DirProcessor::wav_to_txt_dir()
 {
-        QStringList fileNames = getFileNamesInDir(InDirPath);
-        int countFiles = fileNames.size();
-        if(countFiles==0)
-            throw QString("No Files in dir:"+InDirPath);
 
-        emit this->numberOfFiles(countFiles);
+    qDebug()<<"START!";
+
+    QStringList fileNames = getFileNamesInDir(m_InDirPath);
+    int countFiles = fileNames.size();
+    if(countFiles==0)
+    {
+        emit messageSig(Message("Отсутствуют файлы для обработки!"));
+        emit finished();
+
+        return;
+    }
+
+    emit this->numberOfFiles(countFiles);
 
 
-        for(int i=0;i<countFiles;i++)
+    if(!init())
+        return;
+
+    setRunning(true);
+
+
+    for(int i=0;i<countFiles;i++)
+    {
+
+        QString     InFullWavFileName      =   m_InDirPath+"/"+fileNames.at(i);
+        QString     language            =   "Processed";
+        QString     moveDir             =   m_OutDirPath    +"/"+language;
+        QString     outTxtDir           =   m_OutDirPath    +"/TXT";
+        QString     MoveFullWavFileName     =   moveDir         +"/"+fileNames.at(i);
+
+        createDir(moveDir);
+        createDir(outTxtDir);
+
+        QString TxtNameFile = QString(fileNames.at(i)).replace(".wav",".txt");
+
+        QString OutFullTxtFileName = outTxtDir + "/"+TxtNameFile;
+
+        if(getRunning()==false)
+            return;
+
+        emit this->numberOfCurrentFile(i);
+        emit this->nameOfCurrentFile(fileNames.at(i));
+
+
+        VoskProcessor::wav_to_txt(InFullWavFileName,OutFullTxtFileName);
+
+        VoskProcessor::reset();
+
+        if(getRunning())
         {
-            QString     InFullWavFileName      =   InDirPath+"/"+fileNames.at(i);
-            QString     language            =   "Processed";
-            QString     moveDir             =   OutDirPath    +"/"+language;
-            QString     outTxtDir           =   OutDirPath    +"/TXT";
-            QString     MoveFullWavFileName     =   moveDir         +"/"+fileNames.at(i);
+            moveFile(InFullWavFileName,MoveFullWavFileName);
+            qDebug()<<"Файл: "+ InFullWavFileName+" язык:"+ language;
 
-            createDir(moveDir);
-            createDir(outTxtDir);
-
-            QString TxtNameFile = QString(fileNames.at(i)).replace(".wav",".txt");
-
-            QString OutFullTxtFileName = outTxtDir + "/"+TxtNameFile;
-
-            try {
-
-                if(flagStop==true)
-                   return;
-
-                emit this->numberOfCurrentFile(i);
-                emit this->nameOfCurrentFile(fileNames.at(i));
-
-                VoskProcessor::wav_to_txt(InFullWavFileName,OutFullTxtFileName);
-
-                VoskProcessor::reset();
-
-                if(!flagStop)
-                moveFile(InFullWavFileName,MoveFullWavFileName);
-
-                emit this->MsgOfProcess("Файл: "+ InFullWavFileName+" язык:"+ language);
-                emit this->MsgOfProcess("Перемещен: "+ MoveFullWavFileName);
-            }
-            catch (const QString & err)
-            {
-                emit this->errorSig(err);
-                throw;
-            }
+            emit this->messageSig(Message("Файл: "+ InFullWavFileName+" язык:"+ language,Message::POSITIVE));
+            emit this->messageSig(Message("Перемещен: "+ MoveFullWavFileName,Message::POSITIVE));
         }
+    }
+
+
+
+    emit finished();
+
+}
+
+void DirProcessor::setParams(const QString & InDirPath, const QString & OutDirPath, const QString &modelPath,int samplRate)
+{
+    setModelPath(modelPath);
+    setSampleRate(samplRate);
+    m_InDirPath     = InDirPath;
+    m_OutDirPath    = OutDirPath;
 }
 
 void DirProcessor::stop()
 {
-      flagStop = true;
-      VoskProcessor::stop();
+    VoskProcessor::stop();
+    setRunning(false);
 
 }
 
 QStringList DirProcessor::getFileNamesInDir(const QString &DirPath)
 {
-     QStringList namesFiles;
-     QDir messageDir(DirPath);
-     namesFiles=(messageDir.entryList(QStringList("*.*"),QDir::Files,QDir::NoSort));//создание листа с названиями файлов
-     return namesFiles;
+    QStringList namesFiles;
+    QDir messageDir(DirPath);
+    namesFiles=(messageDir.entryList(QStringList("*.*"),QDir::Files,QDir::NoSort));//создание листа с названиями файлов
+    return namesFiles;
 }
 
 void DirProcessor::createDir(QString pathDir)
@@ -82,4 +108,22 @@ void DirProcessor::moveFile(QString pathFile, QString pathMove)
 {
     QFile file(pathFile);
     file.rename(pathFile,pathMove);
+}
+
+bool DirProcessor::getRunning() const
+{
+    return m_running;
+}
+
+void DirProcessor::setRunning(bool running)
+{
+    if(m_running == running)
+        return;
+
+    m_running = running;
+
+    VoskProcessor::setRunning(m_running);
+
+
+    emit runningChanged();
 }
