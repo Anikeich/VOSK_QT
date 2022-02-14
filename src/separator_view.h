@@ -19,6 +19,7 @@
 #include <QApplication>
 #include <QDebug>
 #include <QThread>
+#include <QStackedWidget>
 
 #include "VoskLib/vosk_api.h"
 #include "DirProcessor.h"
@@ -46,8 +47,9 @@ signals:
     void runningChanged();
 
 public slots:
-    void pocessMessage(const Message & msg);
+    void processMessage(const Message & msg);
     void finish();
+    void stop();
 
 private:
 
@@ -74,7 +76,9 @@ private:
         QString btnChInputCat           = "Выбрать";
         QString btnChOutCat             = "Выбрать";
         QString btnChModel              = "Выбрать";
-        QString btnMainProc             = "Обработать";
+        QString btnStart                = " Старт ";
+        QString btnStop                 = " Стоп  ";
+
     }buttonsName;
 
 
@@ -89,14 +93,25 @@ private:
 
     const struct ElementsStyle
     {
-        QString MainWindowStyle         = "QWidget#MainWindow   {   background: #fffcdb }";
-        QString ProgressBarStyle        = "QProgressBar         { border: 2px solid gray    ;    border-radius: 5px  ; background: #55ff7f           ;   width: 20px;    text-align: center}";
-        QString ProgressBarChunkStyle   = "QProgressBar::chunk  { background: green}";
-        QString PushButtonStyle         = "QPushButton          { border: 2px solid #00aa00 ;   border-radius: 5px  ; background: #f0e7b7           ;   min-height: 30 }";
-        QString PushButtonStylePressed  = "QPushButton:pressed  { border: 2px solid #00aa00 ;   border-radius: 5px  ; background: green             ;   min-height: 30 }";
-        QString PushButtonStyleTracked  = "QPushButton:hover    { border: 2px solid #d2d27b ;   border-radius: 5px  ; background: #f0e7b7           ;   min-height: 30 }";
-        QString LineEditeStyle          = "QLineEdit    { border: 2px solid #00aa00 ;   border-radius: 5px  ; background: #fffcdb           ;   min-height: 30}";
-        QString TextEditeStyle          = "QTextEdit    { border: 5px solid #d2d27b ;   border-radius: 5px  ; background-color: #fffcdb     ;   min-height: 30}";
+        QString MainWindowStyle             = "QWidget#MainWindow           { background: #fffcdb }";
+
+        QString ProgressBarStyle            = "QProgressBar                 { border: 2px solid gray    ;    border-radius: 5px  ; background: #55ff7f          ;   width: 20px;    text-align: center}";
+        QString ProgressBarChunkStyle       = "QProgressBar::chunk          { background: green}";
+
+        QString PushButtonStyle             = "QPushButton                  { border: 2px solid #00aa00 ;   border-radius: 5px  ; background: #f0e7b7           ;   min-height: 30 }";
+        QString PushButtonStylePressed      = "QPushButton:pressed          { border: 2px solid #00aa00 ;   border-radius: 5px  ; background: green             ;   min-height: 30 }";
+        QString PushButtonStyleTracked      = "QPushButton:hover            { border: 2px solid #d2d27b ;   border-radius: 5px  ; background: #f0e7b7           ;   min-height: 30 }";
+
+        QString PushButtonStyleStart        = "QPushButton#Start            { border: 2px solid #00aa00 ;   border-radius: 5px  ; background: #55ff7f           ;   min-height: 30 }";
+        QString PushButtonStyleStartPressed = "QPushButton#Start:pressed    { border: 2px solid #00aa00 ;   border-radius: 5px  ; background: green             ;   min-height: 30 }";
+        QString PushButtonStyleStartTracked = "QPushButton#Start:hover      { border: 2px solid #d2d27b ;   border-radius: 5px  ; background: #55ff7f           ;   min-height: 30 }";
+
+        QString PushButtonStyleStop        = "QPushButton#Stop              { border: 2px solid #00aa00 ;   border-radius: 5px  ; background: #aa5500           ;   min-height: 30 }";
+        QString PushButtonStyleStopPressed = "QPushButton#Stop:pressed      { border: 2px solid #00aa00 ;   border-radius: 5px  ; background: rad               ;   min-height: 30 }";
+        QString PushButtonStyleStopTracked = "QPushButton#Stop:hover        { border: 2px solid #d2d27b ;   border-radius: 5px  ; background: #aa5500           ;   min-height: 30 }";
+
+        QString LineEditeStyle              = "QLineEdit                    { border: 2px solid #00aa00 ;   border-radius: 5px  ; background: #fffcdb           ;   min-height: 30}";
+        QString TextEditeStyle              = "QTextEdit                    { border: 5px solid #d2d27b ;   border-radius: 5px  ; background-color: #fffcdb     ;   min-height: 30}";
 
 
     }myStyle;
@@ -104,7 +119,7 @@ private:
     void            createMainWindow();
     void            setStyle();
     void            connectButtonsWhithFunctions();
-    void            connectProcessorWithViewAndNewThread(DirProcessor *processor, QThread *processThread);
+    void            connectProcessorWithViewAndNewThread();
     QString         selectDir(QString nameDir);
 
     void            saveParams(params m_params);    //сохраняет параметры в файл настроек
@@ -120,7 +135,8 @@ private:
     QPushButton     *   m_btnChuseInputCatal    = nullptr;
     QPushButton     *   m_btnChuseOutputCatal   = nullptr;
     QPushButton     *   m_btnChuseModelPath     = nullptr;
-    QPushButton     *   m_btnMainProcess        = nullptr;
+    QPushButton     *   m_Start                 = nullptr;
+    QPushButton     *   m_Stop                  = nullptr;
 
     QLabel          *   m_lblInputCatal         = nullptr;
     QLabel          *   m_lblOutputCatal        = nullptr;

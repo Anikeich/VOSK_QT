@@ -41,7 +41,7 @@ void DirProcessor::wav_to_txt_dir()
         QString OutFullTxtFileName = outTxtDir + "/"+TxtNameFile;
 
         if(getRunning()==false)
-            return;
+            break;
 
         emit this->numberOfCurrentFile(i);
         emit this->nameOfCurrentFile(fileNames.at(i));
@@ -68,10 +68,10 @@ void DirProcessor::wav_to_txt_dir()
 
         if(getRunning())
         {
-            emit this->messageSig(Message("Файл: "+ InFullWavFileName+" язык:"+ language,Message::POSITIVE));
+            emit this->messageSig(Message("Файл: "+ InFullWavFileName+" обработан!",Message::POSITIVE));
             if(moveFile(InFullWavFileName,MoveFullWavFileName))
             {
-                emit this->messageSig(Message("Перемещен: "+ MoveFullWavFileName,Message::POSITIVE));
+                emit this->messageSig(Message("Файл: "+ InFullWavFileName+" перемещен в :"+ MoveFullWavFileName,Message::POSITIVE));
             }
             else
             {
