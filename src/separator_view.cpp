@@ -68,10 +68,13 @@ void separator_view::finish()
 
     m_processThread->wait();
 
-    delete   m_processThread;
-
     delete   processor   ;
 
+    delete   m_processThread;
+
+    m_processThread = nullptr;
+
+    processor = nullptr;
 }
 
 void separator_view::createMainWindow()
@@ -163,10 +166,11 @@ void separator_view::connectButtonsWhithFunctions()
 void separator_view::connectProcessorWithViewAndNewThread(DirProcessor * processor, QThread* processThread)
 {
     connect(processThread,      &QThread::started,                      processor,                  &DirProcessor::wav_to_txt_dir);
+    connect(processThread,      &QThread::destroyed,[](){
+       qDebug()<<"QThread destroyed!";
+    });
     connect(this,               &separator_view::stopAll,               processor,                  &DirProcessor::stop                  ,Qt::DirectConnection);
     connect(processor,          &DirProcessor::finished,                this,                       &separator_view::finish);
-
-
     connect(processor,          &DirProcessor::messageSig,              this,                       &separator_view::pocessMessage       ,Qt::DirectConnection);
     connect(processor,          &DirProcessor::fileSizeSig,             m_pBarProcessFile,          &QProgressBar::setMaximum);
     connect(processor,          &DirProcessor::bitOfFileSig,            m_pBarProcessFile,          &QProgressBar::setValue);
@@ -193,7 +197,12 @@ separator_view::params separator_view::readParams()
 
 void separator_view::func_MainProcess()
 {
-        m_textEdit->clear();
+    if(m_processThread!=nullptr)
+    {
+        return;
+    }
+
+        m_textEdit->clear();        
 
     try {
 
@@ -201,22 +210,20 @@ void separator_view::func_MainProcess()
 
         saveParams(m_ParamsForLib);
 
-           processor            = new DirProcessor;
+        processor            = new DirProcessor;
 
-           m_processThread      = new QThread;
-
-        processor->setParams(m_ParamsForLib.InputCatalPath,m_ParamsForLib.OutputCatalPath,m_ParamsForLib.ModelPath,16000.0);
+        processor->setParams(m_ParamsForLib.InputCatalPath,m_ParamsForLib.OutputCatalPath,m_ParamsForLib.ModelPath,16000);
 
         if(processor->getFileNamesInDir(m_ParamsForLib.InputCatalPath).size()==0)
         {
-            this->pocessMessage(Message("Отсутствуют файлы для обработки!"));
+            this->pocessMessage(Message("Отсутствуют файлы для обработки!",Message::ORDINARY));
 
             delete processor;
 
-            delete m_processThread;
-
             return;
         }
+
+        m_processThread      = new QThread;
 
         connectProcessorWithViewAndNewThread(processor,m_processThread);
 
@@ -234,7 +241,7 @@ void separator_view::func_MainProcess()
     }
 }
 
-void separator_view::showError(const QString err)
+void separator_view::showError(const QString & err)
 {
     QMessageBox msgBox;
     msgBox.setStyleSheet(myStyle.MainWindowStyle);

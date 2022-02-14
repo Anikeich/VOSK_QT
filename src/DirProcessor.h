@@ -4,10 +4,11 @@
 #include <QObject>
 #include "voskprocessor.h"
 #include "message.h"
+#include <QVector>
 
 class DirProcessor :public VoskProcessor
 {    
- Q_OBJECT
+    Q_OBJECT
 
     Q_PROPERTY(bool running READ getRunning WRITE setRunning NOTIFY runningChanged)
 
@@ -15,10 +16,10 @@ public:
     DirProcessor(QObject * parent = nullptr);
     ~DirProcessor()
     {
-            qDebug()<<"DirProcessor daleted!";
+        qDebug()<<"DirProcessor daleted!";
     }
     void wav_to_txt_dir();
-    void setParams(const QString & InDirPath, const QString & OutDirPath, const QString & modelPath, int samplRate);
+    void setParams(const QString & InDirPath, const QString & OutDirPath, const QString & modelPath, int samplRate=8000);
 
     bool getRunning() const;
     void setRunning(bool running);
@@ -39,11 +40,17 @@ public slots:
 
 private:
     void            createDir(QString pathDir);
+
     void            moveFile(QString pathFile,QString pathMove);
+
+
     QString  m_InDirPath;
+
     QString  m_OutDirPath;
 
     bool m_running;
+
+
 
 
 };

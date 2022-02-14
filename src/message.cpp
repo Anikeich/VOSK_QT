@@ -4,8 +4,8 @@
 Message::Message(const QString &msg, Message::TypeMessage type):m_text(msg),m_msgType(type)
 {
     if (QMetaType::type("Message") == QMetaType::UnknownType) {
-          qRegisterMetaType<Message>("Message");
-       }
+        qRegisterMetaType<Message>("Message");
+    }
 }
 
 QString Message::text() const

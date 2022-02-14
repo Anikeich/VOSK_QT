@@ -18,7 +18,6 @@ void DirProcessor::wav_to_txt_dir()
     {
         emit messageSig(Message("Отсутствуют файлы для обработки!"));
         emit finished();
-
         return;
     }
 
@@ -56,7 +55,6 @@ void DirProcessor::wav_to_txt_dir()
 
         VoskProcessor::wav_to_txt(InFullWavFileName,OutFullTxtFileName);
 
-        VoskProcessor::reset();
 
         if(getRunning())
         {
@@ -66,6 +64,7 @@ void DirProcessor::wav_to_txt_dir()
             emit this->messageSig(Message("Файл: "+ InFullWavFileName+" язык:"+ language,Message::POSITIVE));
             emit this->messageSig(Message("Перемещен: "+ MoveFullWavFileName,Message::POSITIVE));
         }
+        VoskProcessor::reset();
     }
 
 
