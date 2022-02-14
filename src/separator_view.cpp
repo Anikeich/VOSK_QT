@@ -58,7 +58,11 @@ void separator_view::pocessMessage(const Message & msg)
 
 void separator_view::finish()
 {
-    m_pBar->setValue(m_pBar->maximum());
+    m_pBar->setValue(0);
+
+    m_pBarProcessFile->setValue(0);
+
+    m_pBarProcessFile->setFormat("");
 
     m_pBar->close();
 
@@ -68,13 +72,7 @@ void separator_view::finish()
 
     m_processThread->wait();
 
-    delete   processor   ;
-
-    delete   m_processThread;
-
-    m_processThread = nullptr;
-
-    processor = nullptr;
+    deleteResources();
 
     qDebug()<<"finish";
 }
@@ -169,7 +167,7 @@ void separator_view::connectProcessorWithViewAndNewThread(DirProcessor * process
 {
     connect(processThread,      &QThread::started,                      processor,                  &DirProcessor::wav_to_txt_dir);
     connect(processThread,      &QThread::destroyed,[](){
-       qDebug()<<"QThread destroyed!";
+        qDebug()<<"QThread destroyed!";
     });
     connect(this,               &separator_view::stopAll,               processor,                  &DirProcessor::stop                  ,Qt::DirectConnection);
     connect(processor,          &DirProcessor::finished,                this,                       &separator_view::finish);
@@ -204,55 +202,39 @@ void separator_view::func_MainProcess()
         return;
     }
 
-        m_textEdit->clear();        
+    m_textEdit->clear();
 
-    try {
+    m_ParamsForLib = readParams();
 
-        m_ParamsForLib = readParams();
+    saveParams(m_ParamsForLib);
 
-        saveParams(m_ParamsForLib);
+    processor            = new DirProcessor;
 
-        processor            = new DirProcessor;
-        m_processThread      = new QThread;
+    m_processThread      = new QThread;
 
-        processor->setParams(m_ParamsForLib.InputCatalPath,m_ParamsForLib.OutputCatalPath,m_ParamsForLib.ModelPath);
+    processor->setParams(m_ParamsForLib.InputCatalPath,m_ParamsForLib.OutputCatalPath,m_ParamsForLib.ModelPath);
 
-        if(processor->getFileNamesInDir(m_ParamsForLib.InputCatalPath).size()==0)
-        {
-            this->pocessMessage(Message("Отсутствуют файлы для обработки!",Message::ORDINARY));
+    if(processor->getFileNamesInDir(m_ParamsForLib.InputCatalPath).size()==0)
+    {
+        this->pocessMessage(Message("Отсутствуют файлы для обработки!",Message::ORDINARY));
 
-            delete processor;
+        deleteResources();
 
-            delete m_processThread;
-
-            return;
-        }
-
-
-        connectProcessorWithViewAndNewThread(processor,m_processThread);
-
-        processor->moveToThread(m_processThread);
-
-        m_processThread->start();
-
-        m_pBar->show();
-
-        m_pBarProcessFile->show();
-
-
-    } catch (const QString & out) {
-        showError(out);
+        return;
     }
+
+    connectProcessorWithViewAndNewThread(processor,m_processThread);
+
+    processor->moveToThread(m_processThread);
+
+    m_processThread->start();
+
+    m_pBar->show();
+
+    m_pBarProcessFile->show();
 }
 
-void separator_view::showError(const QString & err)
-{
-    QMessageBox msgBox;
-    msgBox.setStyleSheet(myStyle.MainWindowStyle);
-    msgBox.setIcon(QMessageBox::Warning);
-    msgBox.setText(err);
-    msgBox.exec();
-}
+
 
 void separator_view::func_selectDirInputCatal()
 {
@@ -274,6 +256,17 @@ void separator_view::func_selectDirModelCatal()
     QString path = selectDir(dialogsName.chuseModel);
     if(path!="")
         m_ModelPath->setText(path);
+}
+
+void separator_view::deleteResources()
+{
+    delete processor;
+
+    delete m_processThread;
+
+    processor = nullptr;
+
+    m_processThread = nullptr;
 }
 
 

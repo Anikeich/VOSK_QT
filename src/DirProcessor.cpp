@@ -60,6 +60,7 @@ void DirProcessor::wav_to_txt_dir()
         {
             qDebug()<<"invalid initialization!";
             emit messageSig(Message("Не удалось инициализировать модель для распознования!",Message::NEGATIVE));
+            emit finished();
             return;
         }
 
