@@ -68,10 +68,10 @@ void DirProcessor::wav_to_txt_dir()
 
         if(getRunning())
         {
-            emit this->messageSig(Message("Файл: "+ InFullWavFileName+" язык:"+ language,Message::POSITIVE));
+            emit this->messageSig(Message("Файл: "+ InFullWavFileName+" обработан!",Message::POSITIVE));
             if(moveFile(InFullWavFileName,MoveFullWavFileName))
             {
-                emit this->messageSig(Message("Перемещен: "+ MoveFullWavFileName,Message::POSITIVE));
+                emit this->messageSig(Message("Файл: "+ InFullWavFileName+" перемещен в :"+ MoveFullWavFileName,Message::POSITIVE));
             }
             else
             {
