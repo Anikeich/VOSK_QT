@@ -35,6 +35,7 @@ bool VoskProcessor::init()
 
     m_recognizer       = vosk_recognizer_new(m_model, m_SampleRate);
 
+    qDebug()<<"model init";
     return true;
 }
 
@@ -43,11 +44,13 @@ void VoskProcessor::free()
     reset();
     vosk_recognizer_free(m_recognizer);
     vosk_model_free(m_model);
+    qDebug()<<"model free";
 }
 
 void VoskProcessor::reset()
 {
     vosk_recognizer_reset(m_recognizer);
+    qDebug()<<"model reset";
 
 }
 
@@ -115,7 +118,9 @@ void VoskProcessor::decode(const QString &filePathIn, const QString &filePathOut
 
     fclose(wavin);
 
-    reset();
+    qDebug()<<"FinishDecode";
+
+
 }
 
 void VoskProcessor::writeResultToFile(const QString &fileName)

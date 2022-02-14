@@ -52,7 +52,7 @@ void separator_view::pocessMessage(const Message & msg)
     else if(msg.msgType()==Message::ORDINARY)
         m_textEdit->setTextColor(Qt::blue);
 
-    m_textEdit->append("Msg: "+msg.text());
+    m_textEdit->append("Msg: "+msg.text()+"\n");
 
 }
 
@@ -75,6 +75,8 @@ void separator_view::finish()
     m_processThread = nullptr;
 
     processor = nullptr;
+
+    qDebug()<<"finish";
 }
 
 void separator_view::createMainWindow()
@@ -171,7 +173,7 @@ void separator_view::connectProcessorWithViewAndNewThread(DirProcessor * process
     });
     connect(this,               &separator_view::stopAll,               processor,                  &DirProcessor::stop                  ,Qt::DirectConnection);
     connect(processor,          &DirProcessor::finished,                this,                       &separator_view::finish);
-    connect(processor,          &DirProcessor::messageSig,              this,                       &separator_view::pocessMessage       ,Qt::DirectConnection);
+    connect(processor,          &DirProcessor::messageSig,              this,                       &separator_view::pocessMessage       );
     connect(processor,          &DirProcessor::fileSizeSig,             m_pBarProcessFile,          &QProgressBar::setMaximum);
     connect(processor,          &DirProcessor::bitOfFileSig,            m_pBarProcessFile,          &QProgressBar::setValue);
     connect(processor,          &DirProcessor::nameOfCurrentFile,       m_pBarProcessFile,          &QProgressBar::setFormat);
@@ -211,6 +213,7 @@ void separator_view::func_MainProcess()
         saveParams(m_ParamsForLib);
 
         processor            = new DirProcessor;
+        m_processThread      = new QThread;
 
         processor->setParams(m_ParamsForLib.InputCatalPath,m_ParamsForLib.OutputCatalPath,m_ParamsForLib.ModelPath);
 
@@ -220,10 +223,11 @@ void separator_view::func_MainProcess()
 
             delete processor;
 
+            delete m_processThread;
+
             return;
         }
 
-        m_processThread      = new QThread;
 
         connectProcessorWithViewAndNewThread(processor,m_processThread);
 
