@@ -42,7 +42,7 @@ public slots:
 private:
     void            createDir(QString pathDir);
 
-    void            moveFile(QString pathFile,QString pathMove);
+    bool moveFile(QString pathFile,QString pathMove);
 
     int getFileSamplRate(const QString & filename);
 

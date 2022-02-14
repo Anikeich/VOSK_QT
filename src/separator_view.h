@@ -103,7 +103,6 @@ private:
 
     void            createMainWindow();
     void            setStyle();
-    void            showError(const QString &err);
     void            connectButtonsWhithFunctions();
     void            connectProcessorWithViewAndNewThread(DirProcessor *processor, QThread *processThread);
     QString         selectDir(QString nameDir);
@@ -140,8 +139,9 @@ private:
     VoskRecognizer  *   m_recognizer            = nullptr;  
 
     DirProcessor   *   processor                = nullptr;
-
     QThread        *   m_processThread          = nullptr;
+
+    void deleteResources();
 
 
 

@@ -9,7 +9,6 @@ DirProcessor::DirProcessor(QObject *parent):
 
 void DirProcessor::wav_to_txt_dir()
 {
-
     qDebug()<<"START!";
 
     QStringList fileNames = getFileNamesInDir(m_InDirPath);
@@ -23,11 +22,7 @@ void DirProcessor::wav_to_txt_dir()
 
     emit this->numberOfFiles(countFiles);
 
-
-
-
     setRunning(true);
-
 
     for(int i=0;i<countFiles;i++)
     {
@@ -63,27 +58,30 @@ void DirProcessor::wav_to_txt_dir()
 
         if(!init())
         {
+            qDebug()<<"invalid initialization!";
             emit messageSig(Message("Не удалось инициализировать модель для распознования!",Message::NEGATIVE));
+            emit finished();
             return;
         }
 
         VoskProcessor::wav_to_txt(InFullWavFileName,OutFullTxtFileName);
 
-
         if(getRunning())
         {
-            moveFile(InFullWavFileName,MoveFullWavFileName);
-            qDebug()<<"Файл: "+ InFullWavFileName+" язык:"+ language;
-
             emit this->messageSig(Message("Файл: "+ InFullWavFileName+" язык:"+ language,Message::POSITIVE));
-            emit this->messageSig(Message("Перемещен: "+ MoveFullWavFileName,Message::POSITIVE));
-        }
+            if(moveFile(InFullWavFileName,MoveFullWavFileName))
+            {
+                emit this->messageSig(Message("Перемещен: "+ MoveFullWavFileName,Message::POSITIVE));
+            }
+            else
+            {
+                emit messageSig(Message("Не удалось переместить файл: "+InFullWavFileName+" в "+MoveFullWavFileName+". Возможно файл с таким именем уже присутствует в выходной директории.",Message::NEGATIVE));
 
+            }
+        }
         VoskProcessor::free();
     }
-
     emit finished();
-
 }
 
 void DirProcessor::setParams(const QString & InDirPath, const QString & OutDirPath, const QString &modelPath)
@@ -115,10 +113,11 @@ void DirProcessor::createDir(QString pathDir)
         InDir.mkpath(pathDir);
 }
 
-void DirProcessor::moveFile(QString pathFile, QString pathMove)
+bool DirProcessor::moveFile(QString pathFile, QString pathMove)
 {
     QFile file(pathFile);
-    file.rename(pathFile,pathMove);
+    bool result = file.rename(pathFile,pathMove);
+    return result;
 }
 
 int DirProcessor::getFileSamplRate(const QString &filename)
