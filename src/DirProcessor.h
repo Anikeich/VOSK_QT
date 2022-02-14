@@ -4,6 +4,7 @@
 #include <QObject>
 #include "voskprocessor.h"
 #include "message.h"
+#include "wavfile.h"
 #include <QVector>
 
 class DirProcessor :public VoskProcessor
@@ -19,7 +20,7 @@ public:
         qDebug()<<"DirProcessor daleted!";
     }
     void wav_to_txt_dir();
-    void setParams(const QString & InDirPath, const QString & OutDirPath, const QString & modelPath, int samplRate=8000);
+    void setParams(const QString & InDirPath, const QString & OutDirPath, const QString & modelPath);
 
     bool getRunning() const;
     void setRunning(bool running);
@@ -43,6 +44,7 @@ private:
 
     void            moveFile(QString pathFile,QString pathMove);
 
+    int getFileSamplRate(const QString & filename);
 
     QString  m_InDirPath;
 

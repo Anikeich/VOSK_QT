@@ -24,8 +24,7 @@ void DirProcessor::wav_to_txt_dir()
     emit this->numberOfFiles(countFiles);
 
 
-    if(!init())
-        return;
+
 
     setRunning(true);
 
@@ -52,6 +51,21 @@ void DirProcessor::wav_to_txt_dir()
         emit this->numberOfCurrentFile(i);
         emit this->nameOfCurrentFile(fileNames.at(i));
 
+        int SampleRate = getFileSamplRate(InFullWavFileName);
+
+        if(SampleRate<0)
+        {
+            emit messageSig(Message("Не удалось прочитать заголовок wav файла!",Message::NEGATIVE));
+            continue;
+        }
+
+        setSampleRate(SampleRate);
+
+        if(!init())
+        {
+            emit messageSig(Message("Не удалось инициализировать модель для распознования!",Message::NEGATIVE));
+            return;
+        }
 
         VoskProcessor::wav_to_txt(InFullWavFileName,OutFullTxtFileName);
 
@@ -64,19 +78,17 @@ void DirProcessor::wav_to_txt_dir()
             emit this->messageSig(Message("Файл: "+ InFullWavFileName+" язык:"+ language,Message::POSITIVE));
             emit this->messageSig(Message("Перемещен: "+ MoveFullWavFileName,Message::POSITIVE));
         }
-        VoskProcessor::reset();
+
+        VoskProcessor::free();
     }
-
-
 
     emit finished();
 
 }
 
-void DirProcessor::setParams(const QString & InDirPath, const QString & OutDirPath, const QString &modelPath,int samplRate)
+void DirProcessor::setParams(const QString & InDirPath, const QString & OutDirPath, const QString &modelPath)
 {
     setModelPath(modelPath);
-    setSampleRate(samplRate);
     m_InDirPath     = InDirPath;
     m_OutDirPath    = OutDirPath;
 }
@@ -107,6 +119,20 @@ void DirProcessor::moveFile(QString pathFile, QString pathMove)
 {
     QFile file(pathFile);
     file.rename(pathFile,pathMove);
+}
+
+int DirProcessor::getFileSamplRate(const QString &filename)
+{
+   WavFile file;
+
+   if(!file.open(filename))
+       return -1;
+
+  int SampleRate =  file.fileFormat().sampleRate();
+
+  file.close();
+
+   return SampleRate;
 }
 
 bool DirProcessor::getRunning() const

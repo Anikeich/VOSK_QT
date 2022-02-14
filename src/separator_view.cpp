@@ -212,7 +212,7 @@ void separator_view::func_MainProcess()
 
         processor            = new DirProcessor;
 
-        processor->setParams(m_ParamsForLib.InputCatalPath,m_ParamsForLib.OutputCatalPath,m_ParamsForLib.ModelPath,16000);
+        processor->setParams(m_ParamsForLib.InputCatalPath,m_ParamsForLib.OutputCatalPath,m_ParamsForLib.ModelPath);
 
         if(processor->getFileNamesInDir(m_ParamsForLib.InputCatalPath).size()==0)
         {

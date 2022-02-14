@@ -23,7 +23,7 @@ public:
     explicit VoskProcessor(QObject * parent = nullptr);
 
     ~VoskProcessor(){
-        free();
+
      qDebug()<<"VoskProcessor deleted!";
 
     }
