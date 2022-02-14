@@ -41,7 +41,7 @@ void DirProcessor::wav_to_txt_dir()
         QString OutFullTxtFileName = outTxtDir + "/"+TxtNameFile;
 
         if(getRunning()==false)
-            return;
+            break;
 
         emit this->numberOfCurrentFile(i);
         emit this->nameOfCurrentFile(fileNames.at(i));
