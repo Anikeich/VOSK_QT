@@ -43,7 +43,7 @@ void separator_view::closeEvent(QCloseEvent *event)
     emit stopAll();
 }
 
-void separator_view::pocessMessage(const Message & msg)
+void separator_view::processMessage(const Message & msg)
 {
     if(msg.msgType()==Message::POSITIVE)
         m_textEdit->setTextColor(Qt::darkGreen);
@@ -55,6 +55,8 @@ void separator_view::pocessMessage(const Message & msg)
     m_textEdit->append("Msg: "+msg.text()+"\n");
 
 }
+
+
 
 void separator_view::finish()
 {
@@ -74,7 +76,19 @@ void separator_view::finish()
 
     deleteResources();
 
+    m_Start->show();
+
+    m_Stop->close();
+
+    processMessage(Message("Обработка завершена!",Message::ORDINARY));
+
     qDebug()<<"finish";
+}
+
+void separator_view::stop()
+{
+    emit stopAll();
+    processMessage(Message("Остановлено!",Message::ORDINARY));
 }
 
 void separator_view::createMainWindow()
@@ -82,7 +96,10 @@ void separator_view::createMainWindow()
     m_btnChuseInputCatal    =   new QPushButton(buttonsName.btnChInputCat);
     m_btnChuseOutputCatal   =   new QPushButton(buttonsName.btnChOutCat);
     m_btnChuseModelPath     =   new QPushButton(buttonsName.btnChModel);
-    m_btnMainProcess        =   new QPushButton(buttonsName.btnMainProc);
+    m_Start                 =   new QPushButton(buttonsName.btnStart);
+    m_Stop                  =   new QPushButton(buttonsName.btnStop);
+    m_Start->setObjectName  ("Start");
+    m_Stop->setObjectName   ("Stop");
 
     m_lblInputCatal         =   new QLabel(labelsName.lblInputCatal);
     m_lblOutputCatal        =   new QLabel(labelsName.lblOutputCatal);
@@ -97,34 +114,46 @@ void separator_view::createMainWindow()
     m_pBar                  =   new QProgressBar;
     m_pBarProcessFile       =   new QProgressBar;
 
-    QVBoxLayout* vloutlabel =   new QVBoxLayout;
-    QVBoxLayout* vloutLine  =   new QVBoxLayout;
-    QVBoxLayout* vloutButton=   new QVBoxLayout;
-    QHBoxLayout* hlout      =   new QHBoxLayout;
+    QVBoxLayout* vloutlabel     =   new QVBoxLayout;
+    QVBoxLayout* vloutLine      =   new QVBoxLayout;
+    QVBoxLayout* vloutButton    =   new QVBoxLayout;
+    QHBoxLayout* HloutStartStop =   new QHBoxLayout;
+    QHBoxLayout* hlout          =   new QHBoxLayout;
 
     vloutlabel->addWidget(m_lblInputCatal);
     vloutlabel->addWidget(m_lblOutputCatal);
     vloutlabel->addWidget(m_lblModelPath);
-    vloutlabel->addSpacing(40);
 
     vloutLine->addWidget(m_InputCatalPath);
     vloutLine->addWidget(m_OutputCatalPath);
     vloutLine->addWidget(m_ModelPath);
-    vloutLine->addSpacing(40);
 
 
     vloutButton->addWidget(m_btnChuseInputCatal);
     vloutButton->addWidget(m_btnChuseOutputCatal);
     vloutButton->addWidget(m_btnChuseModelPath);
-    vloutButton->addWidget(m_btnMainProcess);
 
 
     hlout->addLayout(vloutlabel);
     hlout->addLayout(vloutLine);
     hlout->addLayout(vloutButton);
 
+
+
+
+    m_Start->setMinimumWidth(100);
+    m_Stop->setMinimumWidth(100);
+
+    HloutStartStop->addWidget(m_Start,1,Qt::AlignRight);
+    HloutStartStop->addWidget(m_Stop,1,Qt::AlignRight);
+
+
+
     QVBoxLayout* Mainhlout = new QVBoxLayout;
     Mainhlout->addLayout(hlout);
+    Mainhlout->addSpacing(5);
+    Mainhlout->addLayout(HloutStartStop);
+    Mainhlout->addSpacing(5);
     Mainhlout->addWidget(m_textEdit);
     Mainhlout->addWidget(m_pBar);
     Mainhlout->addWidget(m_pBarProcessFile);
@@ -135,6 +164,8 @@ void separator_view::createMainWindow()
     m_pBar->close();
 
     m_pBarProcessFile->close();
+
+    m_Stop->close();
 
 
 }
@@ -149,7 +180,14 @@ void separator_view::setStyle()
                             myStyle.ProgressBarChunkStyle+
                             myStyle.TextEditeStyle  +
                             myStyle.PushButtonStyleTracked+
-                            myStyle.PushButtonStylePressed
+                            myStyle.PushButtonStylePressed+
+                            myStyle.PushButtonStyleStart+
+                            myStyle.PushButtonStyleStartTracked+
+                            myStyle.PushButtonStyleStartPressed+
+                            myStyle.PushButtonStyleStop+
+                            myStyle.PushButtonStyleStopTracked+
+                            myStyle.PushButtonStyleStopPressed
+
                             );
 
 
@@ -157,21 +195,23 @@ void separator_view::setStyle()
 
 void separator_view::connectButtonsWhithFunctions()
 {
-    connect(m_btnMainProcess,       &QPushButton::clicked,  this,   &separator_view::func_MainProcess);
+    connect(m_Start,                &QPushButton::clicked,  this,   &separator_view::func_MainProcess);
+    connect(m_Stop,                 &QPushButton::clicked,  this,   &separator_view::stop);
     connect(m_btnChuseInputCatal,   &QPushButton::clicked,  this,   &separator_view::func_selectDirInputCatal);
     connect(m_btnChuseOutputCatal,  &QPushButton::clicked,  this,   &separator_view::func_selectDirOutputCatal);
     connect(m_btnChuseModelPath,    &QPushButton::clicked,  this,   &separator_view::func_selectDirModelCatal);
 }
 
-void separator_view::connectProcessorWithViewAndNewThread(DirProcessor * processor, QThread* processThread)
+void separator_view::connectProcessorWithViewAndNewThread()
 {
-    connect(processThread,      &QThread::started,                      processor,                  &DirProcessor::wav_to_txt_dir);
-    connect(processThread,      &QThread::destroyed,[](){
+    connect(m_processThread,      &QThread::started,                      processor,                  &DirProcessor::wav_to_txt_dir);
+
+    connect(m_processThread,      &QThread::destroyed,[](){
         qDebug()<<"QThread destroyed!";
     });
     connect(this,               &separator_view::stopAll,               processor,                  &DirProcessor::stop                  ,Qt::DirectConnection);
     connect(processor,          &DirProcessor::finished,                this,                       &separator_view::finish);
-    connect(processor,          &DirProcessor::messageSig,              this,                       &separator_view::pocessMessage       );
+    connect(processor,          &DirProcessor::messageSig,              this,                       &separator_view::processMessage       );
     connect(processor,          &DirProcessor::fileSizeSig,             m_pBarProcessFile,          &QProgressBar::setMaximum);
     connect(processor,          &DirProcessor::bitOfFileSig,            m_pBarProcessFile,          &QProgressBar::setValue);
     connect(processor,          &DirProcessor::nameOfCurrentFile,       m_pBarProcessFile,          &QProgressBar::setFormat);
@@ -216,14 +256,14 @@ void separator_view::func_MainProcess()
 
     if(processor->getFileNamesInDir(m_ParamsForLib.InputCatalPath).size()==0)
     {
-        this->pocessMessage(Message("Отсутствуют файлы для обработки!",Message::ORDINARY));
+        this->processMessage(Message("Отсутствуют файлы для обработки!",Message::ORDINARY));
 
         deleteResources();
 
         return;
     }
 
-    connectProcessorWithViewAndNewThread(processor,m_processThread);
+    connectProcessorWithViewAndNewThread();
 
     processor->moveToThread(m_processThread);
 
@@ -232,6 +272,10 @@ void separator_view::func_MainProcess()
     m_pBar->show();
 
     m_pBarProcessFile->show();
+
+    m_Start->close();
+
+    m_Stop->show();
 }
 
 
