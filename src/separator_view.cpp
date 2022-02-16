@@ -10,7 +10,7 @@ separator_view::separator_view(QWidget *parent) : QWidget(parent)
     QCoreApplication::setOrganizationName("CIRI");
     QCoreApplication::setApplicationName("VOSK");
 
-    setWindowTitle("VOSK");
+    setWindowTitle("VOSK_v2.0");
     resize(800,600);
 
     createMainWindow();
@@ -45,15 +45,8 @@ void separator_view::closeEvent(QCloseEvent *event)
 
 void separator_view::processMessage(const Message & msg)
 {
-    if(msg.msgType()==Message::POSITIVE)
-        m_textEdit->setTextColor(Qt::darkGreen);
-    else if (msg.msgType()==Message::NEGATIVE)
-        m_textEdit->setTextColor(Qt::red);
-    else if(msg.msgType()==Message::ORDINARY)
-        m_textEdit->setTextColor(Qt::blue);
 
-    m_textEdit->append("Msg: "+msg.text()+"\n");
-
+    m_msgModel.addMessage(msg);
 }
 
 
@@ -109,7 +102,10 @@ void separator_view::createMainWindow()
     m_OutputCatalPath       =   new QLineEdit;
     m_ModelPath             =   new QLineEdit;
 
-    m_textEdit              =   new QTextEdit;
+    m_listViewe              =   new QListView;
+    m_listViewe->setViewMode(QListView::ListMode);
+
+    m_listViewe->setModel(&m_msgModel);
 
     m_pBar                  =   new QProgressBar;
     m_pBarProcessFile       =   new QProgressBar;
@@ -154,7 +150,7 @@ void separator_view::createMainWindow()
     Mainhlout->addSpacing(5);
     Mainhlout->addLayout(HloutStartStop);
     Mainhlout->addSpacing(5);
-    Mainhlout->addWidget(m_textEdit);
+    Mainhlout->addWidget(m_listViewe);
     Mainhlout->addWidget(m_pBar);
     Mainhlout->addWidget(m_pBarProcessFile);
 
@@ -186,8 +182,8 @@ void separator_view::setStyle()
                             myStyle.PushButtonStyleStartPressed+
                             myStyle.PushButtonStyleStop+
                             myStyle.PushButtonStyleStopTracked+
-                            myStyle.PushButtonStyleStopPressed
-
+                            myStyle.PushButtonStyleStopPressed+
+                            myStyle.ListViewStyle
                             );
 
 
@@ -242,7 +238,8 @@ void separator_view::func_MainProcess()
         return;
     }
 
-    m_textEdit->clear();
+    m_msgModel.clear();
+
 
     m_ParamsForLib = readParams();
 
