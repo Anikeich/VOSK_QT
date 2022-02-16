@@ -15,6 +15,8 @@
 #include <QBrush>
 #include <QCoreApplication>
 #include <QTextEdit>
+#include <QListView>
+#include <QStringListModel>
 #include <QSettings>
 #include <QApplication>
 #include <QDebug>
@@ -146,7 +148,10 @@ private:
     QLineEdit       *   m_OutputCatalPath       = nullptr;
     QLineEdit       *   m_ModelPath             = nullptr;
 
-    QTextEdit       *   m_textEdit              = nullptr;
+    QListView       *   m_listViewe              = nullptr;
+    QStringListModel    m_msgModel;
+    QStringList         m_Messages;
+
     QProgressBar    *   m_pBar                  = nullptr;
     QProgressBar    *   m_pBarProcessFile       = nullptr;
 

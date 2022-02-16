@@ -10,7 +10,7 @@ separator_view::separator_view(QWidget *parent) : QWidget(parent)
     QCoreApplication::setOrganizationName("CIRI");
     QCoreApplication::setApplicationName("VOSK");
 
-    setWindowTitle("VOSK");
+    setWindowTitle("VOSK_v2.0");
     resize(800,600);
 
     createMainWindow();
@@ -45,14 +45,16 @@ void separator_view::closeEvent(QCloseEvent *event)
 
 void separator_view::processMessage(const Message & msg)
 {
-    if(msg.msgType()==Message::POSITIVE)
-        m_textEdit->setTextColor(Qt::darkGreen);
-    else if (msg.msgType()==Message::NEGATIVE)
-        m_textEdit->setTextColor(Qt::red);
-    else if(msg.msgType()==Message::ORDINARY)
-        m_textEdit->setTextColor(Qt::blue);
+//    if(msg.msgType()==Message::POSITIVE)
+//        m_listViewe->setTextColor(Qt::darkGreen);
+//    else if (msg.msgType()==Message::NEGATIVE)
+//        m_listViewe->setTextColor(Qt::red);
+//    else if(msg.msgType()==Message::ORDINARY)
+//        m_listViewe->setTextColor(Qt::blue);
 
-    m_textEdit->append("Msg: "+msg.text()+"\n");
+//    m_listViewe->append("Msg: "+msg.text()+"\n");
+    m_Messages.append(msg.text());
+    m_msgModel.setStringList(m_Messages);
 
 }
 
@@ -109,7 +111,9 @@ void separator_view::createMainWindow()
     m_OutputCatalPath       =   new QLineEdit;
     m_ModelPath             =   new QLineEdit;
 
-    m_textEdit              =   new QTextEdit;
+    m_listViewe              =   new QListView;
+
+    m_listViewe->setModel(&m_msgModel);
 
     m_pBar                  =   new QProgressBar;
     m_pBarProcessFile       =   new QProgressBar;
@@ -154,7 +158,7 @@ void separator_view::createMainWindow()
     Mainhlout->addSpacing(5);
     Mainhlout->addLayout(HloutStartStop);
     Mainhlout->addSpacing(5);
-    Mainhlout->addWidget(m_textEdit);
+    Mainhlout->addWidget(m_listViewe);
     Mainhlout->addWidget(m_pBar);
     Mainhlout->addWidget(m_pBarProcessFile);
 
@@ -242,7 +246,8 @@ void separator_view::func_MainProcess()
         return;
     }
 
-    m_textEdit->clear();
+    m_Messages.clear();
+    m_msgModel.setStringList(m_Messages);
 
     m_ParamsForLib = readParams();
 
