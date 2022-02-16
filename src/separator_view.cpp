@@ -45,17 +45,8 @@ void separator_view::closeEvent(QCloseEvent *event)
 
 void separator_view::processMessage(const Message & msg)
 {
-//    if(msg.msgType()==Message::POSITIVE)
-//        m_listViewe->setTextColor(Qt::darkGreen);
-//    else if (msg.msgType()==Message::NEGATIVE)
-//        m_listViewe->setTextColor(Qt::red);
-//    else if(msg.msgType()==Message::ORDINARY)
-//        m_listViewe->setTextColor(Qt::blue);
 
-//    m_listViewe->append("Msg: "+msg.text()+"\n");
-    m_Messages.append(msg.text());
-    m_msgModel.setStringList(m_Messages);
-
+    m_msgModel.addMessage(msg);
 }
 
 
@@ -112,6 +103,7 @@ void separator_view::createMainWindow()
     m_ModelPath             =   new QLineEdit;
 
     m_listViewe              =   new QListView;
+    m_listViewe->setViewMode(QListView::ListMode);
 
     m_listViewe->setModel(&m_msgModel);
 
@@ -190,8 +182,8 @@ void separator_view::setStyle()
                             myStyle.PushButtonStyleStartPressed+
                             myStyle.PushButtonStyleStop+
                             myStyle.PushButtonStyleStopTracked+
-                            myStyle.PushButtonStyleStopPressed
-
+                            myStyle.PushButtonStyleStopPressed+
+                            myStyle.ListViewStyle
                             );
 
 
@@ -246,8 +238,8 @@ void separator_view::func_MainProcess()
         return;
     }
 
-    m_Messages.clear();
-    m_msgModel.setStringList(m_Messages);
+    m_msgModel.clear();
+
 
     m_ParamsForLib = readParams();
 
