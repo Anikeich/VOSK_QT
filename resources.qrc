@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/">
+        <file>ico/negative.ico</file>
+        <file>ico/ordinary.ico</file>
+        <file>ico/positive.ico</file>
+    </qresource>
+</RCC>

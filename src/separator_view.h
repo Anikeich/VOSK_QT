@@ -14,7 +14,6 @@
 #include <QColor>
 #include <QBrush>
 #include <QCoreApplication>
-#include <QTextEdit>
 #include <QListView>
 #include <QStringListModel>
 #include <QSettings>
@@ -26,7 +25,7 @@
 #include "VoskLib/vosk_api.h"
 #include "DirProcessor.h"
 #include "message.h"
-
+#include "mymessaagemodel.h"
 
 
 class separator_view : public QWidget
@@ -114,6 +113,8 @@ private:
 
         QString LineEditeStyle              = "QLineEdit                    { border: 2px solid #00aa00 ;   border-radius: 5px  ; background: #fffcdb           ;   min-height: 30}";
         QString TextEditeStyle              = "QTextEdit                    { border: 5px solid #d2d27b ;   border-radius: 5px  ; background-color: #fffcdb     ;   min-height: 30}";
+        QString ListViewStyle               = "QListView                    { border: 5px solid #d2d27b ;   border-radius: 5px  ; background-color: #fffcdb     ;   min-height: 30}";
+
 
 
     }myStyle;
@@ -149,7 +150,7 @@ private:
     QLineEdit       *   m_ModelPath             = nullptr;
 
     QListView       *   m_listViewe              = nullptr;
-    QStringListModel    m_msgModel;
+    MyMessaageModel     m_msgModel;
     QStringList         m_Messages;
 
     QProgressBar    *   m_pBar                  = nullptr;

@@ -30,7 +30,8 @@ SOURCES += \
     src/voskprocessor.cpp \
     src/DirProcessor.cpp \
     src/message.cpp \
-    src/wavfile.cpp
+    src/wavfile.cpp \
+    src/mymessaagemodel.cpp
 
 
 HEADERS += \
@@ -39,7 +40,8 @@ HEADERS += \
     src/voskprocessor.h \
     src/DirProcessor.h \
     src/message.h \
-    src/wavfile.h
+    src/wavfile.h \
+    src/mymessaagemodel.h
 
 
 
@@ -52,3 +54,6 @@ else:unix:!macx: LIBS += -L$$PWD/VoskLib/ -lvosk -lgfortran
 
 INCLUDEPATH += $$PWD/VoskLib
 DEPENDPATH += $$PWD/VoskLib
+
+RESOURCES += \
+    resources.qrc
