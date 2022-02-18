@@ -18,6 +18,7 @@ separator_view::separator_view(QWidget *parent) : QWidget(parent)
     connectButtonsWhithFunctions();
     setParamsOnForm(readOldParams());
 
+
 }
 
 void separator_view::setArg(int count, char *arg[])
@@ -45,7 +46,7 @@ void separator_view::closeEvent(QCloseEvent *event)
 
 void separator_view::processMessage(const Message & msg)
 {
-
+    qDebug()<<msg.text();
     m_msgModel.addMessage(msg);
 }
 
@@ -84,6 +85,42 @@ void separator_view::stop()
     processMessage(Message("Остановлено!",Message::ORDINARY));
 }
 
+void separator_view::switchTcpControl(int enable)
+{
+    if(enable)
+    {
+        m_lblControlPort->show();
+        m_spinSetNumPort->show();
+        m_StartServer->show();
+
+    }
+    else
+    {
+        m_lblControlPort->close();
+        m_spinSetNumPort->close();
+        m_StartServer->close();
+        m_StopServer->close();
+    }
+}
+
+void separator_view::startTcpControl()
+{
+      quint16 port = m_spinSetNumPort->value();
+      m_TCPserver.start(QHostAddress::Any,port);
+      m_spinSetNumPort->setEnabled(false);
+      m_StartServer->close();
+      m_StopServer->show();
+}
+
+void separator_view::stopTcpControl()
+{
+    m_TCPserver.stop();
+    m_spinSetNumPort->setEnabled(true);
+    m_StartServer->show();
+    m_StopServer->close();
+
+}
+
 void separator_view::createMainWindow()
 {
     m_btnChuseInputCatal    =   new QPushButton(buttonsName.btnChInputCat);
@@ -110,11 +147,15 @@ void separator_view::createMainWindow()
     m_pBar                  =   new QProgressBar;
     m_pBarProcessFile       =   new QProgressBar;
 
-    QVBoxLayout* vloutlabel     =   new QVBoxLayout;
-    QVBoxLayout* vloutLine      =   new QVBoxLayout;
-    QVBoxLayout* vloutButton    =   new QVBoxLayout;
-    QHBoxLayout* HloutStartStop =   new QHBoxLayout;
-    QHBoxLayout* hlout          =   new QHBoxLayout;
+
+
+    QVBoxLayout* vloutlabel         =   new QVBoxLayout;
+    QVBoxLayout* vloutLine          =   new QVBoxLayout;
+    QVBoxLayout* vloutButton        =   new QVBoxLayout;
+    QHBoxLayout* HloutStartStop     =   new QHBoxLayout;
+    QHBoxLayout* HServerSettings   =    new QHBoxLayout;
+
+    QHBoxLayout* hlout              =   new QHBoxLayout;
 
     vloutlabel->addWidget(m_lblInputCatal);
     vloutlabel->addWidget(m_lblOutputCatal);
@@ -140,8 +181,27 @@ void separator_view::createMainWindow()
     m_Start->setMinimumWidth(100);
     m_Stop->setMinimumWidth(100);
 
+    m_lblControlPort        =   new QLabel("Порт управления: ");
+    m_spinSetNumPort        =   new QSpinBox;
+    m_UseTcpServerCkeck     =   new QCheckBox("Использовать сетевое управление");
+    m_StartServer           =   new QPushButton("Старт сервер");
+    m_StopServer            =   new QPushButton("Стоп сервер");
+
+
+    m_spinSetNumPort->setMinimum(100);
+    m_spinSetNumPort->setMaximum(65535);
+
+    HServerSettings->addWidget(m_UseTcpServerCkeck,1,Qt::AlignLeft);
+    HServerSettings->addWidget(m_lblControlPort,1,Qt::AlignLeft);
+    HServerSettings->addWidget(m_spinSetNumPort,1,Qt::AlignLeft);
+    HServerSettings->addWidget(m_StopServer,1,Qt::AlignLeft);
+    HServerSettings->addWidget(m_StartServer,1,Qt::AlignLeft);
+
+
+
+    HloutStartStop->addLayout(HServerSettings);
     HloutStartStop->addWidget(m_Start,1,Qt::AlignRight);
-    HloutStartStop->addWidget(m_Stop,1,Qt::AlignRight);
+    HloutStartStop->addWidget(m_Stop,Qt::AlignRight);
 
 
 
@@ -162,6 +222,14 @@ void separator_view::createMainWindow()
     m_pBarProcessFile->close();
 
     m_Stop->close();
+
+    m_lblControlPort->close();
+
+    m_spinSetNumPort->close();
+
+    m_StartServer->close();
+
+    m_StopServer->close();
 
 
 }
@@ -191,11 +259,17 @@ void separator_view::setStyle()
 
 void separator_view::connectButtonsWhithFunctions()
 {
-    connect(m_Start,                &QPushButton::clicked,  this,   &separator_view::func_MainProcess);
-    connect(m_Stop,                 &QPushButton::clicked,  this,   &separator_view::stop);
-    connect(m_btnChuseInputCatal,   &QPushButton::clicked,  this,   &separator_view::func_selectDirInputCatal);
-    connect(m_btnChuseOutputCatal,  &QPushButton::clicked,  this,   &separator_view::func_selectDirOutputCatal);
-    connect(m_btnChuseModelPath,    &QPushButton::clicked,  this,   &separator_view::func_selectDirModelCatal);
+    connect(m_Start,                &QPushButton::clicked,      this,   &separator_view::func_MainProcess);
+    connect(m_Stop,                 &QPushButton::clicked,      this,   &separator_view::stop);
+    connect(m_btnChuseInputCatal,   &QPushButton::clicked,      this,   &separator_view::func_selectDirInputCatal);
+    connect(m_btnChuseOutputCatal,  &QPushButton::clicked,      this,   &separator_view::func_selectDirOutputCatal);
+    connect(m_btnChuseModelPath,    &QPushButton::clicked,      this,   &separator_view::func_selectDirModelCatal);
+    connect(m_UseTcpServerCkeck,    &QCheckBox::stateChanged,   this,   &separator_view::switchTcpControl);
+    connect(m_StartServer,          &QPushButton::clicked,      this,   &separator_view::startTcpControl);
+    connect(m_StopServer,           &QPushButton::clicked,      this,   &separator_view::stopTcpControl);
+    connect(&m_TCPserver,           &TCPServer::msg,            this,   &separator_view::processMessage);
+
+
 }
 
 void separator_view::connectProcessorWithViewAndNewThread()

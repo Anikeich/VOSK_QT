@@ -11,11 +11,24 @@ void TCPServer::start(const QHostAddress & adress,quint16 port)
     if(this->listen(adress,port))
     {
         qDebug()<<"ServerStarted port:"<<this->serverPort();
+        emit msg(Message("Сервер запущен успешно! Порт: "+QString::number(this->serverPort()),Message::ORDINARY));
     }
     else
     {
         qDebug()<<"Error server: "+ errorString();
+        emit msg(Message("Ошибка! :"+errorString(),Message::NEGATIVE));
     }
+}
+
+void TCPServer::stop()
+{
+  for(int i=0;i<Sockets.size();i++)
+  {
+      Sockets.at(i)->close();
+  }
+  close();
+  emit msg(Message("Сервер остановлен!",Message::ORDINARY));
+
 }
 
 void TCPServer::SendToClient(QTcpSocket* socket, const QString & message)

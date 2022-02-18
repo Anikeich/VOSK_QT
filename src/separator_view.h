@@ -21,11 +21,14 @@
 #include <QDebug>
 #include <QThread>
 #include <QStackedWidget>
+#include <QCheckBox>
+#include <QSpinBox>
 
 #include "VoskLib/vosk_api.h"
 #include "DirProcessor.h"
 #include "message.h"
 #include "mymessaagemodel.h"
+#include "tcpserver.h"
 
 
 class separator_view : public QWidget
@@ -51,6 +54,10 @@ public slots:
     void processMessage(const Message & msg);
     void finish();
     void stop();
+    void switchTcpControl(int  enable);
+    void startTcpControl();
+    void stopTcpControl();
+
 
 private:
 
@@ -140,10 +147,15 @@ private:
     QPushButton     *   m_btnChuseModelPath     = nullptr;
     QPushButton     *   m_Start                 = nullptr;
     QPushButton     *   m_Stop                  = nullptr;
+    QPushButton     *   m_StartServer           = nullptr;
+    QPushButton     *   m_StopServer            = nullptr;
+
 
     QLabel          *   m_lblInputCatal         = nullptr;
     QLabel          *   m_lblOutputCatal        = nullptr;
     QLabel          *   m_lblModelPath          = nullptr;
+    QLabel          *   m_lblControlPort        = nullptr;
+
 
     QLineEdit       *   m_InputCatalPath        = nullptr;
     QLineEdit       *   m_OutputCatalPath       = nullptr;
@@ -163,7 +175,12 @@ private:
     DirProcessor   *   processor                = nullptr;
     QThread        *   m_processThread          = nullptr;
 
+    QCheckBox      *   m_UseTcpServerCkeck      = nullptr;
+    QSpinBox       *   m_spinSetNumPort         = nullptr;
+
     void deleteResources();
+
+    TCPServer m_TCPserver;
 
 
 

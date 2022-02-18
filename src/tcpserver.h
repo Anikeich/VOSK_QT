@@ -9,6 +9,7 @@
 #include <QByteArray>
 #include <QVector>
 #include <QDataStream>
+#include "message.h"
 
 class TCPServer : public QTcpServer
 {
@@ -20,12 +21,16 @@ public:
     QTcpSocket * socket;
 
     void start(const QHostAddress & adress = QHostAddress::Any,quint16 port = 2022);
+    void stop();
 
 private:
     QVector<QTcpSocket*> Sockets;
     QByteArray m_Data;
     void SendToClient(QTcpSocket *socket, const QString & message);
     quint16 m_DataSize = 0;
+
+signals:
+    void msg(const Message & msg);
 
 
 public slots:

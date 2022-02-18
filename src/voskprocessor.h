@@ -50,10 +50,10 @@ public:
     void setRunning(bool value);
 
 signals:
-    void messageSig           (const Message & msg);
-    void bitOfFileSig       (int val);
-    void fileSizeSig        (int val);
-    void runningChanged     ();
+    void messageSig             (const Message & msg);
+    void bitOfFileSig           (int val);
+    void fileSizeSig            (int val);
+    void runningChanged         ();
 
 public slots:
     void stop();
