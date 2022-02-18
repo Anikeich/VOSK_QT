@@ -5,6 +5,7 @@
 #include <QDebug>
 #include <fstream>
 #include "src/message.h"
+#include <QByteArray>
 
 
 using namespace std;

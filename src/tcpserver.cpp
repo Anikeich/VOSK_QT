@@ -25,8 +25,11 @@ void TCPServer::stop()
   for(int i=0;i<Sockets.size();i++)
   {
       Sockets.at(i)->close();
+      Sockets.at(i)->deleteLater();
+
   }
   close();
+  Sockets.clear();
   emit msg(Message("Сервер остановлен!",Message::ORDINARY));
 
 }
@@ -49,12 +52,16 @@ void TCPServer::incomingConnection(qintptr socket_Descriptor)
     socket = new QTcpSocket;
     socket->setSocketDescriptor(socket_Descriptor);
     connect(socket,&QTcpSocket::readyRead,this,&TCPServer::slotReadyRead);
-    connect(socket,&QTcpSocket::disconnected,socket,&QTcpSocket::deleteLater);
+    connect(socket,&QTcpSocket::disconnected,[=](){
+        emit msg(Message("Клиент отключился!"));
+
+    });
 
     Sockets.push_back(socket);
 
     SendToClient(socket,"Server response: Connected!\n Your ip:"+socket->peerAddress().toString());
 
+    emit msg(Message("Клиент: "+socket->peerAddress().toString()+" подключился!"));
 
 
 }
@@ -107,5 +114,6 @@ void TCPServer::slotReadyRead()
     }
 
 }
+
 
 
