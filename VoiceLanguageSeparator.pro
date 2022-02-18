@@ -31,7 +31,8 @@ SOURCES += \
     src/DirProcessor.cpp \
     src/message.cpp \
     src/wavfile.cpp \
-    src/mymessaagemodel.cpp
+    src/mymessaagemodel.cpp \
+    src/tcpserver.cpp
 
 
 HEADERS += \
@@ -41,7 +42,8 @@ HEADERS += \
     src/DirProcessor.h \
     src/message.h \
     src/wavfile.h \
-    src/mymessaagemodel.h
+    src/mymessaagemodel.h \
+    src/tcpserver.h
 
 
 
