@@ -11,11 +11,17 @@ separator_view::separator_view(QWidget *parent) : QWidget(parent)
     QCoreApplication::setApplicationName("VOSK");
 
     setWindowTitle("VOSK_v2.0");
+
     resize(800,600);
 
+    updateModelsInformation();
+
     createMainWindow();
+
     setStyle();
+
     connectButtonsWhithFunctions();
+
     setParamsOnForm(readOldParams());
 
 
@@ -121,11 +127,16 @@ void separator_view::stopTcpControl()
 
 }
 
+void separator_view::setCurrentModelPath()
+{
+    QRadioButton * sender = static_cast<QRadioButton*>(QObject::sender());
+    m_modelsSettings.currentModelPath = m_modelsSettings.ModelsNames_ModelsPath.value(sender->text());
+}
+
 void separator_view::createMainWindow()
 {
-    m_btnChuseInputCatal    =   new QPushButton(buttonsName.btnChInputCat);
-    m_btnChuseOutputCatal   =   new QPushButton(buttonsName.btnChOutCat);
-    m_btnChuseModelPath     =   new QPushButton(buttonsName.btnChModel);
+    m_btnChooseInputCatal    =   new QPushButton(buttonsName.btnChInputCat);
+    m_btnChooseOutputCatal   =   new QPushButton(buttonsName.btnChOutCat);
     m_Start                 =   new QPushButton(buttonsName.btnStart);
     m_Stop                  =   new QPushButton(buttonsName.btnStop);
     m_Start->setObjectName  ("Start");
@@ -133,11 +144,9 @@ void separator_view::createMainWindow()
 
     m_lblInputCatal         =   new QLabel(labelsName.lblInputCatal);
     m_lblOutputCatal        =   new QLabel(labelsName.lblOutputCatal);
-    m_lblModelPath          =   new QLabel(labelsName.lblModelPath);
 
     m_InputCatalPath        =   new QLineEdit;
     m_OutputCatalPath       =   new QLineEdit;
-    m_ModelPath             =   new QLineEdit;
 
     m_listViewe              =   new QListView;
     m_listViewe->setViewMode(QListView::ListMode);
@@ -146,6 +155,8 @@ void separator_view::createMainWindow()
 
     m_pBar                  =   new QProgressBar;
     m_pBarProcessFile       =   new QProgressBar;
+
+
 
 
 
@@ -159,23 +170,18 @@ void separator_view::createMainWindow()
 
     vloutlabel->addWidget(m_lblInputCatal);
     vloutlabel->addWidget(m_lblOutputCatal);
-    vloutlabel->addWidget(m_lblModelPath);
 
     vloutLine->addWidget(m_InputCatalPath);
     vloutLine->addWidget(m_OutputCatalPath);
-    vloutLine->addWidget(m_ModelPath);
 
 
-    vloutButton->addWidget(m_btnChuseInputCatal);
-    vloutButton->addWidget(m_btnChuseOutputCatal);
-    vloutButton->addWidget(m_btnChuseModelPath);
+    vloutButton->addWidget(m_btnChooseInputCatal);
+    vloutButton->addWidget(m_btnChooseOutputCatal);
 
 
     hlout->addLayout(vloutlabel);
     hlout->addLayout(vloutLine);
     hlout->addLayout(vloutButton);
-
-
 
 
     m_Start->setMinimumWidth(100);
@@ -201,11 +207,12 @@ void separator_view::createMainWindow()
 
     HloutStartStop->addLayout(HServerSettings);
     HloutStartStop->addWidget(m_Start,1,Qt::AlignRight);
-    HloutStartStop->addWidget(m_Stop,Qt::AlignRight);
+    HloutStartStop->addWidget(m_Stop,1,Qt::AlignRight);
 
 
 
     QVBoxLayout* Mainhlout = new QVBoxLayout;
+    Mainhlout->addWidget(createModelLout());
     Mainhlout->addLayout(hlout);
     Mainhlout->addSpacing(5);
     Mainhlout->addLayout(HloutStartStop);
@@ -231,6 +238,24 @@ void separator_view::createMainWindow()
 
     m_StopServer->close();
 
+
+}
+
+QGroupBox *separator_view::createModelLout()
+{
+    m_ModelsLay = new QGroupBox("Доступные модели");
+    QHBoxLayout * modelsLay = new QHBoxLayout;
+
+    QHashIterator<QString, QString> i(m_modelsSettings.ModelsNames_ModelsPath);
+     while (i.hasNext()) {
+         i.next();
+         m_newRbModel = new QRadioButton(i.key());
+         connect(m_newRbModel,&QRadioButton::clicked,this,&separator_view::setCurrentModelPath);
+         modelsLay->addWidget(m_newRbModel);
+     }
+    modelsLay->addStretch(1);
+    m_ModelsLay->setLayout(modelsLay);
+    return m_ModelsLay;
 
 }
 
@@ -261,9 +286,8 @@ void separator_view::connectButtonsWhithFunctions()
 {
     connect(m_Start,                &QPushButton::clicked,      this,   &separator_view::func_MainProcess);
     connect(m_Stop,                 &QPushButton::clicked,      this,   &separator_view::stop);
-    connect(m_btnChuseInputCatal,   &QPushButton::clicked,      this,   &separator_view::func_selectDirInputCatal);
-    connect(m_btnChuseOutputCatal,  &QPushButton::clicked,      this,   &separator_view::func_selectDirOutputCatal);
-    connect(m_btnChuseModelPath,    &QPushButton::clicked,      this,   &separator_view::func_selectDirModelCatal);
+    connect(m_btnChooseInputCatal,   &QPushButton::clicked,      this,   &separator_view::func_selectDirInputCatal);
+    connect(m_btnChooseOutputCatal,  &QPushButton::clicked,      this,   &separator_view::func_selectDirOutputCatal);
     connect(m_UseTcpServerCkeck,    &QCheckBox::stateChanged,   this,   &separator_view::switchTcpControl);
     connect(m_StartServer,          &QPushButton::clicked,      this,   &separator_view::startTcpControl);
     connect(m_StopServer,           &QPushButton::clicked,      this,   &separator_view::stopTcpControl);
@@ -296,9 +320,10 @@ separator_view::params separator_view::readParams()
     params m_ParamsForLib;
     m_ParamsForLib.InputCatalPath     =   m_InputCatalPath->text().trimmed();
     m_ParamsForLib.OutputCatalPath    =   m_OutputCatalPath->text().trimmed();
-    m_ParamsForLib.ModelPath          =   m_ModelPath->text().trimmed();
 
-    if(m_ParamsForLib.InputCatalPath.size()==0||m_ParamsForLib.ModelPath==0)
+    m_ParamsForLib.CurrentModelPath          =  m_modelsSettings.currentModelPath ;
+
+    if(m_ParamsForLib.InputCatalPath.size()==0||m_ParamsForLib.CurrentModelPath==0)
         throw QString("Error readParams():Invalid read params! Ну казан путь к входному каталогу или модели данных!");
 
     return m_ParamsForLib;
@@ -323,7 +348,7 @@ void separator_view::func_MainProcess()
 
     m_processThread      = new QThread;
 
-    processor->setParams(m_ParamsForLib.InputCatalPath,m_ParamsForLib.OutputCatalPath,m_ParamsForLib.ModelPath);
+    processor->setParams(m_ParamsForLib.InputCatalPath,m_ParamsForLib.OutputCatalPath,m_ParamsForLib.CurrentModelPath);
 
     if(processor->getFileNamesInDir(m_ParamsForLib.InputCatalPath).size()==0)
     {
@@ -366,12 +391,6 @@ void separator_view::func_selectDirOutputCatal()
 
 }
 
-void separator_view::func_selectDirModelCatal()
-{
-    QString path = selectDir(dialogsName.chuseModel);
-    if(path!="")
-        m_ModelPath->setText(path);
-}
 
 void separator_view::deleteResources()
 {
@@ -400,7 +419,7 @@ void separator_view::saveParams(separator_view::params m_params)
     QSettings settings(QCoreApplication::organizationName(),QCoreApplication::applicationName());
     settings.setValue("InputCatalPath",m_params.InputCatalPath);
     settings.setValue("OutputCatalPath",m_params.OutputCatalPath);
-    settings.setValue("ModelPath",m_params.ModelPath);
+    settings.setValue("ModelPath",m_params.CurrentModelPath);
 }
 
 separator_view::params separator_view::readOldParams()
@@ -408,7 +427,7 @@ separator_view::params separator_view::readOldParams()
     params out;
     QSettings settings(QCoreApplication::organizationName(),QCoreApplication::applicationName());
     out.InputCatalPath=settings.value("InputCatalPath").toString();
-    out.ModelPath=settings.value("ModelPath").toString();
+    out.CurrentModelPath=settings.value("ModelPath").toString();
     out.OutputCatalPath=settings.value("OutputCatalPath").toString();
     return out;
 }
@@ -417,6 +436,24 @@ void separator_view::setParamsOnForm(separator_view::params onForm)
 {
     m_InputCatalPath->setText(onForm.InputCatalPath);
     m_OutputCatalPath->setText(onForm.OutputCatalPath);
-    m_ModelPath->setText(onForm.ModelPath);
+    //m_ModelPath->setText(onForm.ModelPath);
+}
+
+QStringList separator_view::getAvailableModels(const QString & dir)
+{
+    QDir modelsDir(dir);
+    modelsDir.setFilter(QDir::Dirs|QDir::NoDotAndDotDot);
+    return modelsDir.entryList();
+}
+
+void separator_view::updateModelsInformation()
+{
+   QStringList modelsNames = getAvailableModels(m_modelsSettings.PathToModelsDir);
+    for(int i=0;i< modelsNames.size();i++)
+    {
+        m_modelsSettings.ModelsNames_ModelsPath.insert(modelsNames.at(i),m_modelsSettings.PathToModelsDir+"/"+modelsNames.at(i)+"/"+"model");
+
+    }
+
 }
 

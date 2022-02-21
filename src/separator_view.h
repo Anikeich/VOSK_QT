@@ -23,6 +23,8 @@
 #include <QStackedWidget>
 #include <QCheckBox>
 #include <QSpinBox>
+#include <QRadioButton>
+#include <QGroupBox>
 
 #include "VoskLib/vosk_api.h"
 #include "DirProcessor.h"
@@ -57,16 +59,17 @@ public slots:
     void switchTcpControl(int  enable);
     void startTcpControl();
     void stopTcpControl();
+    void setCurrentModelPath();
+
 
 
 private:
 
     struct params
     {
-        QString  InputCatalPath;
-        QString  OutputCatalPath;
-        QString  ModelPath;
-
+        QString         InputCatalPath;
+        QString         OutputCatalPath;
+        QString         CurrentModelPath;
     }m_ParamsForLib;
 
 
@@ -78,6 +81,17 @@ private:
 
 
     }dialogsName;
+
+
+    struct ModelsSettings
+    {
+        const QString               PathToModelsDir = "Models";
+        QHash<QString,QString>      ModelsNames_ModelsPath;
+        QString                     currentModelPath;
+    }m_modelsSettings;
+
+
+
 
     const struct Buttons
     {
@@ -127,6 +141,8 @@ private:
     }myStyle;
 
     void            createMainWindow();
+    QGroupBox *     createModelLout();
+
     void            setStyle();
     void            connectButtonsWhithFunctions();
     void            connectProcessorWithViewAndNewThread();
@@ -136,15 +152,15 @@ private:
     params          readParams();                   //читает параметры с формы
     params          readOldParams();                //читает параметры из файла настроек
     void            setParamsOnForm(params onForm); //устанавливает параметры на форму
+    QStringList     getAvailableModels(const QString & dir);
+    void            updateModelsInformation();
 
     void            func_MainProcess();
     void            func_selectDirInputCatal();
     void            func_selectDirOutputCatal();
-    void            func_selectDirModelCatal();
 
-    QPushButton     *   m_btnChuseInputCatal    = nullptr;
-    QPushButton     *   m_btnChuseOutputCatal   = nullptr;
-    QPushButton     *   m_btnChuseModelPath     = nullptr;
+    QPushButton     *   m_btnChooseInputCatal    = nullptr;
+    QPushButton     *   m_btnChooseOutputCatal   = nullptr;
     QPushButton     *   m_Start                 = nullptr;
     QPushButton     *   m_Stop                  = nullptr;
     QPushButton     *   m_StartServer           = nullptr;
@@ -153,13 +169,11 @@ private:
 
     QLabel          *   m_lblInputCatal         = nullptr;
     QLabel          *   m_lblOutputCatal        = nullptr;
-    QLabel          *   m_lblModelPath          = nullptr;
     QLabel          *   m_lblControlPort        = nullptr;
 
 
     QLineEdit       *   m_InputCatalPath        = nullptr;
     QLineEdit       *   m_OutputCatalPath       = nullptr;
-    QLineEdit       *   m_ModelPath             = nullptr;
 
     QListView       *   m_listViewe              = nullptr;
     MyMessaageModel     m_msgModel;
@@ -178,9 +192,16 @@ private:
     QCheckBox      *   m_UseTcpServerCkeck      = nullptr;
     QSpinBox       *   m_spinSetNumPort         = nullptr;
 
+
+    QRadioButton   *   m_newRbModel;
+    QGroupBox      *   m_ModelsLay;
+
+
+
     void deleteResources();
 
     TCPServer m_TCPserver;
+
 
 
 

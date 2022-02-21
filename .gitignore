@@ -22,3 +22,5 @@ Makefile*
 release/
 debug/
 testVoiceData/
+VOSK
+Models/

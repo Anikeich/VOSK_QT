@@ -42,7 +42,8 @@ void TCPServer::SendToClient(QTcpSocket* socket, const QString & message)
     out<<quint16(0)<<message;
     out.device()->seek(0);
     out<<quint16(m_Data.size() - sizeof(quint16));
-     socket->write(m_Data);
+    socket->write(m_Data);
+    socket->waitForBytesWritten();
 
 }
 
@@ -54,6 +55,7 @@ void TCPServer::incomingConnection(qintptr socket_Descriptor)
     connect(socket,&QTcpSocket::readyRead,this,&TCPServer::slotReadyRead);
     connect(socket,&QTcpSocket::stateChanged,this,&TCPServer::onSocketStateChanged);
     Sockets.push_back(socket);
+
     SendToClient(socket,"Server response: Connected!\n Your ip:"+socket->peerAddress().toString());
 
     emit msg(Message("Клиент: "+socket->peerAddress().toString()+" подключился!"));
