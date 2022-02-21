@@ -36,6 +36,7 @@ signals:
 public slots:
    virtual  void incomingConnection(qintptr socket_Descriptor);
     void slotReadyRead();
+    void onSocketStateChanged(QAbstractSocket::SocketState SocketState);
 
 };
 

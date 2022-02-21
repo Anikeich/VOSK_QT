@@ -52,13 +52,8 @@ void TCPServer::incomingConnection(qintptr socket_Descriptor)
     socket = new QTcpSocket;
     socket->setSocketDescriptor(socket_Descriptor);
     connect(socket,&QTcpSocket::readyRead,this,&TCPServer::slotReadyRead);
-    connect(socket,&QTcpSocket::disconnected,[=](){
-        emit msg(Message("Клиент отключился!"));
-
-    });
-
+    connect(socket,&QTcpSocket::stateChanged,this,&TCPServer::onSocketStateChanged);
     Sockets.push_back(socket);
-
     SendToClient(socket,"Server response: Connected!\n Your ip:"+socket->peerAddress().toString());
 
     emit msg(Message("Клиент: "+socket->peerAddress().toString()+" подключился!"));
@@ -113,6 +108,17 @@ void TCPServer::slotReadyRead()
         qDebug()<<"DataStream error!";
     }
 
+}
+
+void TCPServer::onSocketStateChanged(QAbstractSocket::SocketState SocketState)
+{
+    if(SocketState==QAbstractSocket::UnconnectedState)
+    {
+        QTcpSocket * sender = static_cast<QTcpSocket*>(QObject::sender());
+        qDebug()<<"Клиент:"+sender->peerAddress().toString()+" отключился!";
+        emit msg(Message("Клиент:"+sender->peerAddress().toString()+" отключился!",Message::ORDINARY));
+        Sockets.removeOne(sender);
+    }
 }
 
 
