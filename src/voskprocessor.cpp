@@ -12,6 +12,11 @@ void VoskProcessor::wav_to_txt(const QString & filePathIn,const QString & filePa
 
     decode(filePathIn,filePathOut);
 
+    if(getRunning())
+    {
+        writeResultToFile(filePathOut);
+    }
+
 }
 
 void VoskProcessor::setModelPath(const QString &modelPath)
@@ -26,6 +31,7 @@ void VoskProcessor::setSampleRate(float rate)
 
 bool VoskProcessor::init()
 {
+    qDebug()<<m_modelPath;
     m_model            = vosk_model_new(m_modelPath.toStdString().data());
     if(m_model==nullptr)
     {
@@ -109,12 +115,7 @@ void VoskProcessor::decode(const QString &filePathIn, const QString &filePathOut
         position +=nread;
 
         emit bitOfFileSig(position);        
-    }
-
-    if(getRunning())
-    {
-        writeResultToFile(m_filePathOut);
-    }
+    }   
 
     fclose(wavin);
 
