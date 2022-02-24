@@ -26,24 +26,24 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         main.cpp \
-    src/separator_view.cpp \
     src/voskprocessor.cpp \
     src/DirProcessor.cpp \
     src/message.cpp \
     src/wavfile.cpp \
     src/mymessaagemodel.cpp \
-    src/tcpserver.cpp
+    src/tcpserver.cpp \
+    src/view.cpp
 
 
 HEADERS += \
-    src/separator_view.h \
     VoskLib/vosk_api.h \
     src/voskprocessor.h \
     src/DirProcessor.h \
     src/message.h \
     src/wavfile.h \
     src/mymessaagemodel.h \
-    src/tcpserver.h
+    src/tcpserver.h \
+    src/view.h
 
 
 

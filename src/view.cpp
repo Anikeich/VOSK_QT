@@ -1,10 +1,10 @@
-#include "separator_view.h"
+#include "view.h"
 
 
 
 
 
-separator_view::separator_view(QWidget *parent) : QWidget(parent)
+view::view(QWidget *parent) : QWidget(parent)
 {
     setObjectName("MainWindow");
     QCoreApplication::setOrganizationName("CIRI");
@@ -27,30 +27,30 @@ separator_view::separator_view(QWidget *parent) : QWidget(parent)
 
 }
 
-void separator_view::setArg(int count, char *arg[])
+void view::setArg(int count, char *arg[])
 {
     if(count==1)
         return;
 
-    m_InputCatalPath->setText(QString(arg[1]));
+    m_InputDirPath->setText(QString(arg[1]));
 
 }
 
 
-separator_view::~separator_view()
+view::~view()
 {
 
 
 }
 
-void separator_view::closeEvent(QCloseEvent *event)
+void view::closeEvent(QCloseEvent *event)
 {
     Q_UNUSED(event)
     qDebug()<<"Stop";
     emit stopAll();
 }
 
-void separator_view::processMessage(const Message & msg)
+void view::processMessage(const Message & msg)
 {
     qDebug()<<msg.text();
     m_msgModel.addMessage(msg);
@@ -58,7 +58,7 @@ void separator_view::processMessage(const Message & msg)
 
 
 
-void separator_view::finish()
+void view::finish()
 {
     m_pBar->setValue(0);
 
@@ -85,13 +85,13 @@ void separator_view::finish()
     qDebug()<<"finish";
 }
 
-void separator_view::stop()
+void view::stop()
 {
     emit stopAll();
     processMessage(Message("Остановлено!",Message::ORDINARY));
 }
 
-void separator_view::switchTcpControl(int enable)
+void view::switchTcpControl(int enable)
 {
     if(enable)
     {
@@ -109,16 +109,16 @@ void separator_view::switchTcpControl(int enable)
     }
 }
 
-void separator_view::startTcpControl()
+void view::startTcpControl()
 {
-      quint16 port = m_spinSetNumPort->value();
-      m_TCPserver.start(QHostAddress::Any,port);
-      m_spinSetNumPort->setEnabled(false);
-      m_StartServer->close();
-      m_StopServer->show();
+    quint16 port = m_spinSetNumPort->value();
+    m_TCPserver.start(QHostAddress::Any,port);
+    m_spinSetNumPort->setEnabled(false);
+    m_StartServer->close();
+    m_StopServer->show();
 }
 
-void separator_view::stopTcpControl()
+void view::stopTcpControl()
 {
     m_TCPserver.stop();
     m_spinSetNumPort->setEnabled(true);
@@ -127,13 +127,13 @@ void separator_view::stopTcpControl()
 
 }
 
-void separator_view::setCurrentModelPath()
+void view::setCurrentModelPath()
 {
     QRadioButton * sender = static_cast<QRadioButton*>(QObject::sender());
     m_modelsSettings.currentModelPath = m_modelsSettings.ModelsNames_ModelsPath.value(sender->text());
 }
 
-void separator_view::createMainWindow()
+void view::createMainWindow()
 {
     m_btnChooseInputCatal    =   new QPushButton(buttonsName.btnChInputCat);
     m_btnChooseOutputCatal   =   new QPushButton(buttonsName.btnChOutCat);
@@ -145,7 +145,7 @@ void separator_view::createMainWindow()
     m_lblInputCatal         =   new QLabel(labelsName.lblInputCatal);
     m_lblOutputCatal        =   new QLabel(labelsName.lblOutputCatal);
 
-    m_InputCatalPath        =   new QLineEdit;
+    m_InputDirPath        =   new QLineEdit;
     m_OutputCatalPath       =   new QLineEdit;
 
     m_listViewe              =   new QListView;
@@ -155,10 +155,6 @@ void separator_view::createMainWindow()
 
     m_pBar                  =   new QProgressBar;
     m_pBarProcessFile       =   new QProgressBar;
-
-
-
-
 
     QVBoxLayout* vloutlabel         =   new QVBoxLayout;
     QVBoxLayout* vloutLine          =   new QVBoxLayout;
@@ -171,7 +167,7 @@ void separator_view::createMainWindow()
     vloutlabel->addWidget(m_lblInputCatal);
     vloutlabel->addWidget(m_lblOutputCatal);
 
-    vloutLine->addWidget(m_InputCatalPath);
+    vloutLine->addWidget(m_InputDirPath);
     vloutLine->addWidget(m_OutputCatalPath);
 
 
@@ -241,25 +237,26 @@ void separator_view::createMainWindow()
 
 }
 
-QGroupBox *separator_view::createModelLout()
+QGroupBox *view::createModelLout()
 {
     m_ModelsLay = new QGroupBox("Доступные модели");
     QHBoxLayout * modelsLay = new QHBoxLayout;
 
-    QHashIterator<QString, QString> i(m_modelsSettings.ModelsNames_ModelsPath);
-     while (i.hasNext()) {
-         i.next();
-         m_newRbModel = new QRadioButton(i.key());
-         connect(m_newRbModel,&QRadioButton::clicked,this,&separator_view::setCurrentModelPath);
-         modelsLay->addWidget(m_newRbModel);
-     }
+    QMapIterator<QString, QString> i(m_modelsSettings.ModelsNames_ModelsPath);
+    while (i.hasNext()) {
+        i.next();
+        QRadioButton * newRb  = new QRadioButton(i.key());
+        connect(newRb,&QRadioButton::clicked,this,&view::setCurrentModelPath);
+        m_newRbModels .push_back(newRb);
+        modelsLay->addWidget(newRb);
+    }
     modelsLay->addStretch(1);
     m_ModelsLay->setLayout(modelsLay);
     return m_ModelsLay;
 
 }
 
-void separator_view::setStyle()
+void view::setStyle()
 {
 
     qApp->setStyleSheet(    myStyle.MainWindowStyle +
@@ -282,30 +279,30 @@ void separator_view::setStyle()
 
 }
 
-void separator_view::connectButtonsWhithFunctions()
+void view::connectButtonsWhithFunctions()
 {
-    connect(m_Start,                &QPushButton::clicked,      this,   &separator_view::func_MainProcess);
-    connect(m_Stop,                 &QPushButton::clicked,      this,   &separator_view::stop);
-    connect(m_btnChooseInputCatal,   &QPushButton::clicked,      this,   &separator_view::func_selectDirInputCatal);
-    connect(m_btnChooseOutputCatal,  &QPushButton::clicked,      this,   &separator_view::func_selectDirOutputCatal);
-    connect(m_UseTcpServerCkeck,    &QCheckBox::stateChanged,   this,   &separator_view::switchTcpControl);
-    connect(m_StartServer,          &QPushButton::clicked,      this,   &separator_view::startTcpControl);
-    connect(m_StopServer,           &QPushButton::clicked,      this,   &separator_view::stopTcpControl);
-    connect(&m_TCPserver,           &TCPServer::msg,            this,   &separator_view::processMessage);
+    connect(m_Start,                &QPushButton::clicked,      this,   &view::func_MainProcess);
+    connect(m_Stop,                 &QPushButton::clicked,      this,   &view::stop);
+    connect(m_btnChooseInputCatal,   &QPushButton::clicked,      this,   &view::func_selectDirInputCatal);
+    connect(m_btnChooseOutputCatal,  &QPushButton::clicked,      this,   &view::func_selectDirOutputCatal);
+    connect(m_UseTcpServerCkeck,    &QCheckBox::stateChanged,   this,   &view::switchTcpControl);
+    connect(m_StartServer,          &QPushButton::clicked,      this,   &view::startTcpControl);
+    connect(m_StopServer,           &QPushButton::clicked,      this,   &view::stopTcpControl);
+    connect(&m_TCPserver,           &TCPServer::msg,            this,   &view::processMessage);
 
 
 }
 
-void separator_view::connectProcessorWithViewAndNewThread()
+void view::connectProcessorWithViewAndNewThread()
 {
     connect(m_processThread,      &QThread::started,                      processor,                  &DirProcessor::wav_to_txt_dir);
 
     connect(m_processThread,      &QThread::destroyed,[](){
         qDebug()<<"QThread destroyed!";
     });
-    connect(this,               &separator_view::stopAll,               processor,                  &DirProcessor::stop                  ,Qt::DirectConnection);
-    connect(processor,          &DirProcessor::finished,                this,                       &separator_view::finish);
-    connect(processor,          &DirProcessor::messageSig,              this,                       &separator_view::processMessage       );
+    connect(this,               &view::stopAll,               processor,                  &DirProcessor::stop                  ,Qt::DirectConnection);
+    connect(processor,          &DirProcessor::finished,                this,                       &view::finish);
+    connect(processor,          &DirProcessor::messageSig,              this,                       &view::processMessage       );
     connect(processor,          &DirProcessor::fileSizeSig,             m_pBarProcessFile,          &QProgressBar::setMaximum);
     connect(processor,          &DirProcessor::bitOfFileSig,            m_pBarProcessFile,          &QProgressBar::setValue);
     connect(processor,          &DirProcessor::nameOfCurrentFile,       m_pBarProcessFile,          &QProgressBar::setFormat);
@@ -315,22 +312,39 @@ void separator_view::connectProcessorWithViewAndNewThread()
 
 
 
-separator_view::params separator_view::readParams()
+ParamsForVoskLib view::readParams()
 {
-    params m_ParamsForLib;
-    m_ParamsForLib.InputCatalPath     =   m_InputCatalPath->text().trimmed();
-    m_ParamsForLib.OutputCatalPath    =   m_OutputCatalPath->text().trimmed();
+    ParamsForVoskLib ParamsForLib;
+    ParamsForLib.setInputDirPath(m_InputDirPath->text().trimmed());
+    ParamsForLib.setOutputDirPath(m_OutputCatalPath->text().trimmed());
 
-    m_ParamsForLib.CurrentModelPath          =  m_modelsSettings.currentModelPath ;
+    for(int i=0;i<m_newRbModels.size();i++)
+    {
+        if(m_newRbModels.at(i)->isChecked())
+        {
+            ParamsForLib.setCurrentModelPath(m_modelsSettings.ModelsNames_ModelsPath.value(m_newRbModels.at(i)->text()));
+            qDebug()<<m_modelsSettings.ModelsNames_ModelsPath.value(m_newRbModels.at(i)->text());
+            break;
+        }
 
-    if(m_ParamsForLib.InputCatalPath.size()==0||m_ParamsForLib.CurrentModelPath==0)
+
+    }
+
+
+
+
+
+
+
+
+    if(ParamsForLib.getInputDirPath().size()==0||ParamsForLib.getCurrentModelPath().size()==0)
         throw QString("Error readParams():Invalid read params! Ну казан путь к входному каталогу или модели данных!");
 
-    return m_ParamsForLib;
+    return ParamsForLib;
 
 }
 
-void separator_view::func_MainProcess()
+void view::func_MainProcess()
 {
     if(m_processThread!=nullptr)
     {
@@ -339,8 +353,13 @@ void separator_view::func_MainProcess()
 
     m_msgModel.clear();
 
+    try {
+        m_ParamsForLib = readParams();
+    } catch (const QString & err) {
+        this->processMessage(Message("Не верный путь к модели!",Message::ORDINARY));
+        return;
 
-    m_ParamsForLib = readParams();
+    }
 
     saveParams(m_ParamsForLib);
 
@@ -348,9 +367,9 @@ void separator_view::func_MainProcess()
 
     m_processThread      = new QThread;
 
-    processor->setParams(m_ParamsForLib.InputCatalPath,m_ParamsForLib.OutputCatalPath,m_ParamsForLib.CurrentModelPath);
+    processor->setParams(m_ParamsForLib.getInputDirPath(),m_ParamsForLib.getOutputDirPath(),m_ParamsForLib.getCurrentModelPath());
 
-    if(processor->getFileNamesInDir(m_ParamsForLib.InputCatalPath).size()==0)
+    if(processor->getFileNamesInDir(m_ParamsForLib.getInputDirPath()).size()==0)
     {
         this->processMessage(Message("Отсутствуют файлы для обработки!",Message::ORDINARY));
 
@@ -376,14 +395,14 @@ void separator_view::func_MainProcess()
 
 
 
-void separator_view::func_selectDirInputCatal()
+void view::func_selectDirInputCatal()
 {
     QString path = selectDir(dialogsName.chuseInputDir);
     if(path!="")
-        m_InputCatalPath->setText(path);
+        m_InputDirPath->setText(path);
 }
 
-void separator_view::func_selectDirOutputCatal()
+void view::func_selectDirOutputCatal()
 {
     QString path = selectDir(dialogsName.chuseOutDir);
     if(path!="")
@@ -392,7 +411,7 @@ void separator_view::func_selectDirOutputCatal()
 }
 
 
-void separator_view::deleteResources()
+void view::deleteResources()
 {
     delete processor;
 
@@ -404,7 +423,7 @@ void separator_view::deleteResources()
 }
 
 
-QString separator_view::selectDir(QString nameDir)
+QString view::selectDir(QString nameDir)
 {
     QString dir = QFileDialog::getExistingDirectory(this,nameDir,
                                                     QDir::rootPath(),
@@ -414,46 +433,85 @@ QString separator_view::selectDir(QString nameDir)
     return dir;
 }
 
-void separator_view::saveParams(separator_view::params m_params)
+void view::saveParams(const ParamsForVoskLib & m_params)
 {
     QSettings settings(QCoreApplication::organizationName(),QCoreApplication::applicationName());
-    settings.setValue("InputCatalPath",m_params.InputCatalPath);
-    settings.setValue("OutputCatalPath",m_params.OutputCatalPath);
-    settings.setValue("ModelPath",m_params.CurrentModelPath);
+    settings.setValue("InputCatalPath",m_params.getInputDirPath());
+    settings.setValue("OutputCatalPath",m_params.getOutputDirPath());
+    settings.setValue("ModelPath",m_params.getCurrentModelPath());
 }
 
-separator_view::params separator_view::readOldParams()
+ParamsForVoskLib view::readOldParams()
 {
-    params out;
+    ParamsForVoskLib out;
     QSettings settings(QCoreApplication::organizationName(),QCoreApplication::applicationName());
-    out.InputCatalPath=settings.value("InputCatalPath").toString();
-    out.CurrentModelPath=settings.value("ModelPath").toString();
-    out.OutputCatalPath=settings.value("OutputCatalPath").toString();
+    out.setInputDirPath(settings.value("InputCatalPath").toString());
+    out.setOutputDirPath(settings.value("OutputCatalPath").toString());
+    out.setCurrentModelPath(settings.value("ModelPath").toString());
     return out;
 }
 
-void separator_view::setParamsOnForm(separator_view::params onForm)
+void view::setParamsOnForm(const ParamsForVoskLib &m_params)
 {
-    m_InputCatalPath->setText(onForm.InputCatalPath);
-    m_OutputCatalPath->setText(onForm.OutputCatalPath);
-    //m_ModelPath->setText(onForm.ModelPath);
+    m_InputDirPath->setText(m_params.getInputDirPath());
+    m_OutputCatalPath->setText(m_params.getOutputDirPath());
+
+    QMapIterator<QString, QString> modelsIt (m_modelsSettings.ModelsNames_ModelsPath);
+     while (modelsIt.hasNext()) {
+         modelsIt.next();
+        if(modelsIt.value()==m_params.getCurrentModelPath())
+        {
+            for(int i=0;i<m_newRbModels.size();i++)
+            {
+                if(m_newRbModels.at(i)->text()==modelsIt.key())
+                {
+                    m_newRbModels.at(i)->setChecked(true);
+                    qDebug()<<m_newRbModels.at(i)->text();
+                }
+
+            }
+
+        }
+     }
+
+    qDebug()<<m_params;
+
 }
 
-QStringList separator_view::getAvailableModels(const QString & dir)
+QStringList view::getAvailableModels(const QString & dir)
 {
     QDir modelsDir(dir);
     modelsDir.setFilter(QDir::Dirs|QDir::NoDotAndDotDot);
     return modelsDir.entryList();
 }
 
-void separator_view::updateModelsInformation()
+void view::updateModelsInformation()
 {
-   QStringList modelsNames = getAvailableModels(m_modelsSettings.PathToModelsDir);
+    QStringList modelsNames = getAvailableModels(m_modelsSettings.PathToModelsDir);
     for(int i=0;i< modelsNames.size();i++)
     {
         m_modelsSettings.ModelsNames_ModelsPath.insert(modelsNames.at(i),m_modelsSettings.PathToModelsDir+"/"+modelsNames.at(i)+"/"+"model");
-
     }
 
 }
 
+
+QString ParamsForVoskLib::getInputDirPath() const
+{
+    return InputDirPath;
+}
+
+void ParamsForVoskLib::setInputDirPath(const QString &value)
+{
+    InputDirPath = value;
+}
+
+QString ParamsForVoskLib::getOutputDirPath() const
+{
+    return OutputDirPath;
+}
+
+void ParamsForVoskLib::setOutputDirPath(const QString &value)
+{
+    OutputDirPath = value;
+}

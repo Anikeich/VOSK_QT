@@ -32,17 +32,86 @@
 #include "mymessaagemodel.h"
 #include "tcpserver.h"
 
+class ParamsForVoskLib
+{
 
-class separator_view : public QWidget
+public:
+
+
+    void setCurrentModelPath(const QString & CurrentModelPath)
+    {
+        if(CurrentModelPath!="")
+        {
+        m_CurrentModelPath = CurrentModelPath;
+        m_CurrentModelName = getModelName(m_CurrentModelPath);
+        }
+
+    }
+
+
+    operator QString() const
+    {
+
+        return "Params: InputDir: "+InputDirPath+";"+
+                "OutputDirPath:"+OutputDirPath+";"+
+                "CurrentModelPath:"+getCurrentModelPath()+";"+
+                "CurrentModelName:"+getCurrentModelName();
+    }
+
+    QString getCurrentModelPath() const
+    {
+        return m_CurrentModelPath;
+    }
+
+    QString getCurrentModelName() const
+    {
+        return m_CurrentModelName;
+    }
+
+
+
+    QString getInputDirPath() const;
+    void setInputDirPath(const QString &value);
+
+    QString getOutputDirPath() const;
+    void setOutputDirPath(const QString &value);
+
+private:
+    QString         m_CurrentModelPath;
+    QString         m_CurrentModelName;
+    QString         InputDirPath;
+    QString         OutputDirPath;
+
+    static const QString getModelName(const QString & modelPath)
+    {
+        QStringList param;
+        param = modelPath.split("/");
+        if(param.size()==3)
+            return param.at(1);
+        else
+            return "";
+    }
+
+
+};
+
+
+
+
+
+
+
+
+class view : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit separator_view(QWidget *parent = nullptr);
+    explicit view(QWidget *parent = nullptr);
 
     void setArg(int count,char * arg[]);
 
-     ~separator_view()                  override;
+    ~view()                  override;
 
     void closeEvent(QCloseEvent *event) override;
 
@@ -65,17 +134,11 @@ public slots:
 
 private:
 
-    struct params
-    {
-        QString         InputCatalPath;
-        QString         OutputCatalPath;
-        QString         CurrentModelPath;
-    }m_ParamsForLib;
 
 
     struct Dialogs
     {
-        QString chuseInputDir           = "bВыбирите входной каталог";
+        QString chuseInputDir           = "Выбирите входной каталог";
         QString chuseOutDir             = "Выбирите выходной каталог";
         QString chuseModel              = "Выбирите каталог модели распознавания";
 
@@ -86,7 +149,7 @@ private:
     struct ModelsSettings
     {
         const QString               PathToModelsDir = "Models";
-        QHash<QString,QString>      ModelsNames_ModelsPath;
+        QMap<QString,QString>       ModelsNames_ModelsPath;
         QString                     currentModelPath;
     }m_modelsSettings;
 
@@ -106,7 +169,7 @@ private:
 
     const struct labels
     {
-        QString lblInputCatal           = "<b>Путь ко входному каталогу</b>";
+        QString lblInputCatal           = "<b>Путь к входному каталогу</b>";
         QString lblOutputCatal          = "<b>Путь к выходному каталогу</b>";
         QString lblModelPath            = "<b>Путь к модели распознавания</b>";
 
@@ -140,6 +203,10 @@ private:
 
     }myStyle;
 
+
+    ParamsForVoskLib m_ParamsForLib;
+
+
     void            createMainWindow();
     QGroupBox *     createModelLout();
 
@@ -148,10 +215,10 @@ private:
     void            connectProcessorWithViewAndNewThread();
     QString         selectDir(QString nameDir);
 
-    void            saveParams(params m_params);    //сохраняет параметры в файл настроек
-    params          readParams();                   //читает параметры с формы
-    params          readOldParams();                //читает параметры из файла настроек
-    void            setParamsOnForm(params onForm); //устанавливает параметры на форму
+    void            saveParams(const ParamsForVoskLib & m_params);    //сохраняет параметры в файл настроек
+    ParamsForVoskLib          readParams();                   //читает параметры с формы
+    ParamsForVoskLib          readOldParams();                //читает параметры из файла настроек
+    void            setParamsOnForm(const ParamsForVoskLib & m_params); //устанавливает параметры на форму
     QStringList     getAvailableModels(const QString & dir);
     void            updateModelsInformation();
 
@@ -172,7 +239,7 @@ private:
     QLabel          *   m_lblControlPort        = nullptr;
 
 
-    QLineEdit       *   m_InputCatalPath        = nullptr;
+    QLineEdit       *   m_InputDirPath        = nullptr;
     QLineEdit       *   m_OutputCatalPath       = nullptr;
 
     QListView       *   m_listViewe              = nullptr;
@@ -184,7 +251,7 @@ private:
 
 
     VoskModel       *   m_model                 = nullptr;
-    VoskRecognizer  *   m_recognizer            = nullptr;  
+    VoskRecognizer  *   m_recognizer            = nullptr;
 
     DirProcessor   *   processor                = nullptr;
     QThread        *   m_processThread          = nullptr;
@@ -193,7 +260,8 @@ private:
     QSpinBox       *   m_spinSetNumPort         = nullptr;
 
 
-    QRadioButton   *   m_newRbModel;
+    QList<QRadioButton   *>   m_newRbModels;
+
     QGroupBox      *   m_ModelsLay;
 
 
@@ -207,6 +275,11 @@ private:
 
 
 };
+
+
+
+
+
 
 
 
