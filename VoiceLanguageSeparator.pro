@@ -32,7 +32,8 @@ SOURCES += \
     src/wavfile.cpp \
     src/mymessaagemodel.cpp \
     src/tcpserver.cpp \
-    src/view.cpp
+    src/view.cpp \
+    src/settingscontroller.cpp
 
 
 HEADERS += \
@@ -43,7 +44,8 @@ HEADERS += \
     src/wavfile.h \
     src/mymessaagemodel.h \
     src/tcpserver.h \
-    src/view.h
+    src/view.h \
+    src/settingscontroller.h
 
 
 

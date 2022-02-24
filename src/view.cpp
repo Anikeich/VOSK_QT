@@ -14,7 +14,7 @@ view::view(QWidget *parent) : QWidget(parent)
 
     resize(800,600);
 
-    updateModelsInformation();
+    m_SettingsController.read();
 
     createMainWindow();
 
@@ -22,7 +22,7 @@ view::view(QWidget *parent) : QWidget(parent)
 
     connectButtonsWhithFunctions();
 
-    setParamsOnForm(readOldParams());
+    setParamsOnForm();
 
 
 }
@@ -130,7 +130,26 @@ void view::stopTcpControl()
 void view::setCurrentModelPath()
 {
     QRadioButton * sender = static_cast<QRadioButton*>(QObject::sender());
-    m_modelsSettings.currentModelPath = m_modelsSettings.ModelsNames_ModelsPath.value(sender->text());
+
+    QString modelName = sender->text();
+
+    QStringList avaluableModelsPath = m_SettingsController.availableModels();
+
+    for(int i=0;i<avaluableModelsPath.size();i++)
+    {
+        QString avModelName = SettingsController::getModelName(avaluableModelsPath.at(i));
+
+        if(modelName == avModelName)
+        {
+            m_SettingsController.setCurrentModelPath(avaluableModelsPath.at(i));
+            return;
+        }
+    }
+
+    processMessage(Message("Не существует пути соответствующего выбранной модели!"));
+    m_SettingsController.setCurrentModelPath("");
+
+
 }
 
 void view::createMainWindow()
@@ -146,7 +165,7 @@ void view::createMainWindow()
     m_lblOutputCatal        =   new QLabel(labelsName.lblOutputCatal);
 
     m_InputDirPath        =   new QLineEdit;
-    m_OutputCatalPath       =   new QLineEdit;
+    m_OutputDirPath       =   new QLineEdit;
 
     m_listViewe              =   new QListView;
     m_listViewe->setViewMode(QListView::ListMode);
@@ -168,7 +187,7 @@ void view::createMainWindow()
     vloutlabel->addWidget(m_lblOutputCatal);
 
     vloutLine->addWidget(m_InputDirPath);
-    vloutLine->addWidget(m_OutputCatalPath);
+    vloutLine->addWidget(m_OutputDirPath);
 
 
     vloutButton->addWidget(m_btnChooseInputCatal);
@@ -240,20 +259,24 @@ void view::createMainWindow()
 QGroupBox *view::createModelLout()
 {
     m_ModelsLay = new QGroupBox("Доступные модели");
+
     QHBoxLayout * modelsLay = new QHBoxLayout;
 
-    QMapIterator<QString, QString> i(m_modelsSettings.ModelsNames_ModelsPath);
-    while (i.hasNext()) {
-        i.next();
-        QRadioButton * newRb  = new QRadioButton(i.key());
+    QStringList avaluableModels = m_SettingsController.availableModels();
+
+    for(int i=0;i<avaluableModels.size();i++)
+    {
+        QRadioButton * newRb  = new QRadioButton(SettingsController::getModelName(avaluableModels.at(i)));
+        if(avaluableModels.at(i) == m_SettingsController.getCurrentModelPath())
+            newRb->setChecked(true);
+
         connect(newRb,&QRadioButton::clicked,this,&view::setCurrentModelPath);
-        m_newRbModels .push_back(newRb);
+        m_newRbForModels.push_back(newRb);
         modelsLay->addWidget(newRb);
     }
     modelsLay->addStretch(1);
     m_ModelsLay->setLayout(modelsLay);
     return m_ModelsLay;
-
 }
 
 void view::setStyle()
@@ -312,38 +335,6 @@ void view::connectProcessorWithViewAndNewThread()
 
 
 
-ParamsForVoskLib view::readParams()
-{
-    ParamsForVoskLib ParamsForLib;
-    ParamsForLib.setInputDirPath(m_InputDirPath->text().trimmed());
-    ParamsForLib.setOutputDirPath(m_OutputCatalPath->text().trimmed());
-
-    for(int i=0;i<m_newRbModels.size();i++)
-    {
-        if(m_newRbModels.at(i)->isChecked())
-        {
-            ParamsForLib.setCurrentModelPath(m_modelsSettings.ModelsNames_ModelsPath.value(m_newRbModels.at(i)->text()));
-            qDebug()<<m_modelsSettings.ModelsNames_ModelsPath.value(m_newRbModels.at(i)->text());
-            break;
-        }
-
-
-    }
-
-
-
-
-
-
-
-
-    if(ParamsForLib.getInputDirPath().size()==0||ParamsForLib.getCurrentModelPath().size()==0)
-        throw QString("Error readParams():Invalid read params! Ну казан путь к входному каталогу или модели данных!");
-
-    return ParamsForLib;
-
-}
-
 void view::func_MainProcess()
 {
     if(m_processThread!=nullptr)
@@ -353,23 +344,25 @@ void view::func_MainProcess()
 
     m_msgModel.clear();
 
-    try {
-        m_ParamsForLib = readParams();
-    } catch (const QString & err) {
-        this->processMessage(Message("Не верный путь к модели!",Message::ORDINARY));
-        return;
+    m_SettingsController.setInputDirPath(m_InputDirPath->text());
 
-    }
+    m_SettingsController.setOutDirPath(m_OutputDirPath->text());
 
-    saveParams(m_ParamsForLib);
+    m_SettingsController.save();
 
-    processor            = new DirProcessor;
+
+   processor            = new DirProcessor;
 
     m_processThread      = new QThread;
 
-    processor->setParams(m_ParamsForLib.getInputDirPath(),m_ParamsForLib.getOutputDirPath(),m_ParamsForLib.getCurrentModelPath());
+    qDebug()<< m_SettingsController.getInputDirPath();
+    qDebug()<< m_SettingsController.getOutDirPath();
+    qDebug()<< m_SettingsController.getCurrentModelPath();
 
-    if(processor->getFileNamesInDir(m_ParamsForLib.getInputDirPath()).size()==0)
+
+    processor->setParams(m_SettingsController.getInputDirPath(),m_SettingsController.getOutDirPath(),m_SettingsController.getCurrentModelPath());
+
+    if(processor->getFileNamesInDir(m_SettingsController.getInputDirPath()).size()==0)
     {
         this->processMessage(Message("Отсутствуют файлы для обработки!",Message::ORDINARY));
 
@@ -406,7 +399,7 @@ void view::func_selectDirOutputCatal()
 {
     QString path = selectDir(dialogsName.chuseOutDir);
     if(path!="")
-        m_OutputCatalPath->setText(path);
+        m_OutputDirPath->setText(path);
 
 }
 
@@ -433,85 +426,14 @@ QString view::selectDir(QString nameDir)
     return dir;
 }
 
-void view::saveParams(const ParamsForVoskLib & m_params)
+
+
+
+void view::setParamsOnForm()
 {
-    QSettings settings(QCoreApplication::organizationName(),QCoreApplication::applicationName());
-    settings.setValue("InputCatalPath",m_params.getInputDirPath());
-    settings.setValue("OutputCatalPath",m_params.getOutputDirPath());
-    settings.setValue("ModelPath",m_params.getCurrentModelPath());
-}
-
-ParamsForVoskLib view::readOldParams()
-{
-    ParamsForVoskLib out;
-    QSettings settings(QCoreApplication::organizationName(),QCoreApplication::applicationName());
-    out.setInputDirPath(settings.value("InputCatalPath").toString());
-    out.setOutputDirPath(settings.value("OutputCatalPath").toString());
-    out.setCurrentModelPath(settings.value("ModelPath").toString());
-    return out;
-}
-
-void view::setParamsOnForm(const ParamsForVoskLib &m_params)
-{
-    m_InputDirPath->setText(m_params.getInputDirPath());
-    m_OutputCatalPath->setText(m_params.getOutputDirPath());
-
-    QMapIterator<QString, QString> modelsIt (m_modelsSettings.ModelsNames_ModelsPath);
-     while (modelsIt.hasNext()) {
-         modelsIt.next();
-        if(modelsIt.value()==m_params.getCurrentModelPath())
-        {
-            for(int i=0;i<m_newRbModels.size();i++)
-            {
-                if(m_newRbModels.at(i)->text()==modelsIt.key())
-                {
-                    m_newRbModels.at(i)->setChecked(true);
-                    qDebug()<<m_newRbModels.at(i)->text();
-                }
-
-            }
-
-        }
-     }
-
-    qDebug()<<m_params;
-
-}
-
-QStringList view::getAvailableModels(const QString & dir)
-{
-    QDir modelsDir(dir);
-    modelsDir.setFilter(QDir::Dirs|QDir::NoDotAndDotDot);
-    return modelsDir.entryList();
-}
-
-void view::updateModelsInformation()
-{
-    QStringList modelsNames = getAvailableModels(m_modelsSettings.PathToModelsDir);
-    for(int i=0;i< modelsNames.size();i++)
-    {
-        m_modelsSettings.ModelsNames_ModelsPath.insert(modelsNames.at(i),m_modelsSettings.PathToModelsDir+"/"+modelsNames.at(i)+"/"+"model");
-    }
-
+    m_InputDirPath->setText(    m_SettingsController.getInputDirPath()  );
+    m_OutputDirPath->setText( m_SettingsController.getOutDirPath()    );
 }
 
 
-QString ParamsForVoskLib::getInputDirPath() const
-{
-    return InputDirPath;
-}
 
-void ParamsForVoskLib::setInputDirPath(const QString &value)
-{
-    InputDirPath = value;
-}
-
-QString ParamsForVoskLib::getOutputDirPath() const
-{
-    return OutputDirPath;
-}
-
-void ParamsForVoskLib::setOutputDirPath(const QString &value)
-{
-    OutputDirPath = value;
-}

@@ -31,72 +31,7 @@
 #include "message.h"
 #include "mymessaagemodel.h"
 #include "tcpserver.h"
-
-class ParamsForVoskLib
-{
-
-public:
-
-
-    void setCurrentModelPath(const QString & CurrentModelPath)
-    {
-        if(CurrentModelPath!="")
-        {
-        m_CurrentModelPath = CurrentModelPath;
-        m_CurrentModelName = getModelName(m_CurrentModelPath);
-        }
-
-    }
-
-
-    operator QString() const
-    {
-
-        return "Params: InputDir: "+InputDirPath+";"+
-                "OutputDirPath:"+OutputDirPath+";"+
-                "CurrentModelPath:"+getCurrentModelPath()+";"+
-                "CurrentModelName:"+getCurrentModelName();
-    }
-
-    QString getCurrentModelPath() const
-    {
-        return m_CurrentModelPath;
-    }
-
-    QString getCurrentModelName() const
-    {
-        return m_CurrentModelName;
-    }
-
-
-
-    QString getInputDirPath() const;
-    void setInputDirPath(const QString &value);
-
-    QString getOutputDirPath() const;
-    void setOutputDirPath(const QString &value);
-
-private:
-    QString         m_CurrentModelPath;
-    QString         m_CurrentModelName;
-    QString         InputDirPath;
-    QString         OutputDirPath;
-
-    static const QString getModelName(const QString & modelPath)
-    {
-        QStringList param;
-        param = modelPath.split("/");
-        if(param.size()==3)
-            return param.at(1);
-        else
-            return "";
-    }
-
-
-};
-
-
-
+#include "settingscontroller.h"
 
 
 
@@ -145,13 +80,6 @@ private:
 
     }dialogsName;
 
-
-    struct ModelsSettings
-    {
-        const QString               PathToModelsDir = "Models";
-        QMap<QString,QString>       ModelsNames_ModelsPath;
-        QString                     currentModelPath;
-    }m_modelsSettings;
 
 
 
@@ -203,10 +131,6 @@ private:
 
     }myStyle;
 
-
-    ParamsForVoskLib m_ParamsForLib;
-
-
     void            createMainWindow();
     QGroupBox *     createModelLout();
 
@@ -215,60 +139,55 @@ private:
     void            connectProcessorWithViewAndNewThread();
     QString         selectDir(QString nameDir);
 
-    void            saveParams(const ParamsForVoskLib & m_params);    //сохраняет параметры в файл настроек
-    ParamsForVoskLib          readParams();                   //читает параметры с формы
-    ParamsForVoskLib          readOldParams();                //читает параметры из файла настроек
-    void            setParamsOnForm(const ParamsForVoskLib & m_params); //устанавливает параметры на форму
-    QStringList     getAvailableModels(const QString & dir);
-    void            updateModelsInformation();
+
+    void            setParamsOnForm(); //устанавливает параметры на форму
 
     void            func_MainProcess();
     void            func_selectDirInputCatal();
     void            func_selectDirOutputCatal();
 
-    QPushButton     *   m_btnChooseInputCatal    = nullptr;
-    QPushButton     *   m_btnChooseOutputCatal   = nullptr;
-    QPushButton     *   m_Start                 = nullptr;
-    QPushButton     *   m_Stop                  = nullptr;
-    QPushButton     *   m_StartServer           = nullptr;
-    QPushButton     *   m_StopServer            = nullptr;
+    QPushButton     *   m_btnChooseInputCatal       = nullptr;
+    QPushButton     *   m_btnChooseOutputCatal      = nullptr;
+    QPushButton     *   m_Start                     = nullptr;
+    QPushButton     *   m_Stop                      = nullptr;
+    QPushButton     *   m_StartServer               = nullptr;
+    QPushButton     *   m_StopServer                = nullptr;
 
 
-    QLabel          *   m_lblInputCatal         = nullptr;
-    QLabel          *   m_lblOutputCatal        = nullptr;
-    QLabel          *   m_lblControlPort        = nullptr;
+    QLabel          *   m_lblInputCatal             = nullptr;
+    QLabel          *   m_lblOutputCatal            = nullptr;
+    QLabel          *   m_lblControlPort            = nullptr;
 
 
-    QLineEdit       *   m_InputDirPath        = nullptr;
-    QLineEdit       *   m_OutputCatalPath       = nullptr;
+    QLineEdit       *   m_InputDirPath              = nullptr;
+    QLineEdit       *   m_OutputDirPath           = nullptr;
 
-    QListView       *   m_listViewe              = nullptr;
+    QListView       *   m_listViewe                 = nullptr;
     MyMessaageModel     m_msgModel;
     QStringList         m_Messages;
 
-    QProgressBar    *   m_pBar                  = nullptr;
-    QProgressBar    *   m_pBarProcessFile       = nullptr;
+    QProgressBar    *   m_pBar                      = nullptr;
+    QProgressBar    *   m_pBarProcessFile           = nullptr;
 
 
-    VoskModel       *   m_model                 = nullptr;
-    VoskRecognizer  *   m_recognizer            = nullptr;
+    VoskModel       *   m_model                     = nullptr;
+    VoskRecognizer  *   m_recognizer                = nullptr;
 
-    DirProcessor   *   processor                = nullptr;
-    QThread        *   m_processThread          = nullptr;
+    DirProcessor   *   processor                    = nullptr;
+    QThread        *   m_processThread              = nullptr;
 
-    QCheckBox      *   m_UseTcpServerCkeck      = nullptr;
-    QSpinBox       *   m_spinSetNumPort         = nullptr;
+    QCheckBox      *   m_UseTcpServerCkeck          = nullptr;
+    QSpinBox       *   m_spinSetNumPort             = nullptr;
 
+    QGroupBox      *   m_ModelsLay                  = nullptr;
 
-    QList<QRadioButton   *>   m_newRbModels;
-
-    QGroupBox      *   m_ModelsLay;
-
-
+    QList<QRadioButton   *>   m_newRbForModels;
 
     void deleteResources();
 
     TCPServer m_TCPserver;
+
+    SettingsController m_SettingsController;
 
 
 
