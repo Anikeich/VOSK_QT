@@ -13,8 +13,8 @@ using namespace std;
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-     view view;
-    view.setArg(argc,argv);
-    view.show();
+    view b;
+    b.setArg(argc,argv);
+    b.show();
     return a.exec();
 }
